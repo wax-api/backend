@@ -9,7 +9,13 @@ wax社区对其项目治理使用[GD.1](https://github.com/wax-api/rfcs/blob/mai
   * `requirements.txt`: 依赖包列表
   * `config`: 默认配置目录。配置文件采用toml语法
   * `start.py`: 启动入口文件。启动命令是`python start.py`，可通过`python start.py --help`查看启动选项。
-  * 数据库：PostgreSQL
+
+## 如何进行测试
+```
+pip install -r requirements.txt
+pip install -r test-requirements.txt
+python -m pytest --cov=wax -v wax/tests
+```
 
 ## 贡献者
 感谢所有wax的贡献者！
