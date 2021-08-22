@@ -16,4 +16,4 @@ wax是一个SAAS(software as a service)化的Restful API管理平台，与openap
 感谢所有wax的贡献者！
 
 ## 许可证(License)
-[MIT](https://opensource.org/licenses/MIT)
+[LessPL](http://www.lesspl.org)
