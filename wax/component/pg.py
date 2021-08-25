@@ -1,5 +1,6 @@
 from aiohttp.web import middleware
 import aiopg
+import psycopg2.extras
 
 
 async def init_pg(app):
@@ -14,8 +15,8 @@ async def close_pg(app):
 
 @middleware
 async def conn_middleware(request, handler):
-    request['pg'] = await request.app['pg']._acquire()
-    try:
-        return await handler(request)
-    finally:
-        await request.app['pg'].release(request['pg'])
+    async with request.app['pg'].acquire() as conn:
+        request['pg_conn'] = conn
+        async with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            request['pg_cur'] = cur
+            return await handler(request)
