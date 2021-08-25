@@ -13,6 +13,6 @@ class JWTUtil:
 
     def decrypt(self, token: str) -> dict:
         """
-        get payload dict, raise jwt.exceptions.ExpiredSignatureError if token has expired.
+        return payload dict or raises jwt.ExpiredSignatureError if the expiration time is in the past
         """
         return jwt.decode(token, self.salt, algorithms='HS256')

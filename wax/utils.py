@@ -20,5 +20,5 @@ def eafp(function, default=None):
         return default
 
 
-def now_timestamp():
-    return int(time.time())
+def timestamp(delta=0):
+    return int(time.time()) + delta
