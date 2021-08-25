@@ -14,8 +14,8 @@ async def close_pg(app):
 
 @middleware
 async def conn_middleware(request, handler):
-    request.app['pg_conn'] = await request.app['pg']._acquire()
+    request['pg'] = await request.app['pg']._acquire()
     try:
         return await handler(request)
     finally:
-        await request.app['pg'].release(request.app['pg_conn'])
+        await request.app['pg'].release(request['pg'])

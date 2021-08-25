@@ -30,7 +30,7 @@ def wax_endpoint(endpoint):
 async def login(request: Request) -> Response:
     req_data = await request.json()
     print(req_data)
-    async with request.app['pg_conn'].cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+    async with request['pg'].cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         await cur.execute('select * from tbl_user limit 1')
         user_db = await cur.fetchone()
         print(user_db)
