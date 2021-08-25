@@ -1,0 +1,9 @@
+[lessweb]
+port = 8080
+
+[lessweb.postgres]
+database = ''
+user = ''
+password = ''
+host = ''
+port = 5432
