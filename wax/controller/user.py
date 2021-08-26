@@ -1,6 +1,5 @@
-from aiohttp.web import Request, Response, json_response, HTTPBadRequest
+from aiohttp.web import Request, Response, json_response, HTTPNotFound
 from wax.component.jwt import JWTUtil
-from wax.component.pg import pg_cursor
 from wax.component.security import auth_user
 from wax.utils import timestamp
 from wax.json_util import json_dumps
@@ -59,5 +58,5 @@ async def me_info(request: Request) -> Response:
     user_mapper = UserMapper(request)
     user_db = await user_mapper.select_by_id(id=auth_user(request).user_id)
     if not user_db:
-        return HTTPBadRequest(text='当前用户不存在')
+        return HTTPNotFound()
     return json_response(user_db, dumps=json_dumps)

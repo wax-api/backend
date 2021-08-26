@@ -39,7 +39,7 @@ def _execute(mako_sql, mode):
         if mode == SELECT_ONE:
             return await cursor.fetchone()
         elif mode == SELECT_ALL:
-            return await cursor.fetchall()
+            return await cursor.fetchall() or {}
         elif mode == WITH_COMMIT:
             await pg_conn(args[0].request).commit()
             return None
