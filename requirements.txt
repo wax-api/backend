@@ -3,3 +3,4 @@ aiopg
 toml
 lesscli
 pyjwt
+Mako
