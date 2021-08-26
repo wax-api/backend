@@ -6,7 +6,7 @@ You may obtain a copy of Lesspl Public License(v0.3) at: http://www.lesspl.org
 
 
 from unittest import TestCase
-from wax.utils import eafp
+from wax.utils import eafp, left_strip
 
 
 class TestEafp(TestCase):
@@ -15,3 +15,11 @@ class TestEafp(TestCase):
         self.assertEqual(result, 'error')
         result = eafp(lambda: [1, 2][1], default=0)
         self.assertEqual(result, 2)
+
+
+class TestLeftStrip(TestCase):
+    def test_success(self):
+        result = left_strip('abcde', 'abc')
+        self.assertEqual(result, 'de')
+        result = left_strip('abcde', 'cba')
+        self.assertEqual(result, 'abcde')

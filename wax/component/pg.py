@@ -14,7 +14,7 @@ async def close_pg(app):
 
 
 @middleware
-async def conn_middleware(request, handler):
+async def pg_conn_middleware(request, handler):
     async with request.app['pg'].acquire() as conn:
         request['pg_conn'] = conn
         async with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:

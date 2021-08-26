@@ -20,5 +20,20 @@ def eafp(function, default=None):
         return default
 
 
-def timestamp(delta=0):
+def timestamp(delta=0) -> int:
+    """
+    Return the integer seconds since the Epoch,
+    and plus delta seconds.
+    """
     return int(time.time()) + delta
+
+
+def left_strip(this: str, word: str) -> str:
+    """
+    Remove the matching words on the left,
+    if this no startswith word, return the original string.
+    """
+    if this.startswith(word):
+        return this[len(word):]
+    else:
+        return this

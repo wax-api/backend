@@ -4,7 +4,8 @@ import aiopg
 import toml
 import lesscli
 import wax.controller.user
-from wax.component.pg import init_pg, close_pg, conn_middleware
+from wax.component.pg import init_pg, close_pg, pg_conn_middleware
+from wax.component.security import security_middleware
 
 
 @lesscli.add_option('confpath', default='config.toml', help='configure file (.toml format) path, default: config.toml')
@@ -16,8 +17,10 @@ def main(confpath):
     app['config'] = toml.loads(open(confpath).read())
     app.on_startup.append(init_pg)
     app.on_cleanup.append(close_pg)
-    app.middlewares.append(conn_middleware)
+    app.middlewares.append(pg_conn_middleware)
+    app.middlewares.append(security_middleware)
     app.router.add_post('/login', wax.controller.user.login)
+    app.router.add_get('/app/me', wax.controller.user.me_info)
     web.run_app(app, port=app['config']['lessweb']['port'])
 
 
