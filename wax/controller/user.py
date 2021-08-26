@@ -4,7 +4,7 @@ from wax.component.security import auth_user
 from wax.utils import timestamp
 from wax.json_util import json_dumps
 from wax.mapper.user import UserMapper
-from wax.wax_dsl import endpoint
+from wax.wax_dsl import endpoint, Keys
 
 @endpoint({
     'method': 'POST',
@@ -43,7 +43,6 @@ async def login(request: Request) -> Response:
                 'avatar?': 'string',
                 'truename': 'string',
                 'email': 'string',
-                'acl': 'string',
                 'created_at': 'string',
                 'updated_at': 'string',
             }
@@ -55,4 +54,5 @@ async def me_info(request: Request) -> Response:
     user_db = await user_mapper.select_by_id(id=auth_user(request).user_id)
     if not user_db:
         raise HTTPNotFound()
+    user_db -= Keys('acl')
     return json_response(user_db, dumps=json_dumps)

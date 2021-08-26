@@ -91,3 +91,23 @@ def input_header(request: Request):
 
 def input_body(request: Request):
     return request['input'].get('body', None)
+
+
+class Keys:
+    def __init__(self, *keys):
+        self.keys = keys
+
+    def __rsub__(self, other):
+        if isinstance(other, dict):
+            for key in self.keys:
+                if '.' in key:
+                    key_head, key_tail = key.split('.', 1)
+                    if key_head in other:
+                        Keys(key_tail).__rsub__(other[key_head])
+                else:
+                    other.pop(key, None)
+        elif isinstance(other, list):
+            for item in other:
+                if isinstance(item, dict):
+                    self.__rsub__(item)
+        return other
