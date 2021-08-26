@@ -1,5 +1,5 @@
 import jwt
-from wax.utils import eafp, randstr
+from wax.utils import eafp, randstr, setdefault
 import string
 
 
@@ -27,6 +27,4 @@ class JWTUtil:
 
     @classmethod
     def from_(cls, app) -> 'JWTUtil':
-        if cls.refname not in app:
-            app[cls.refname] = JWTUtil(app['config'])
-        return app[cls.refname]
+        return setdefault(app, cls.refname, lambda: JWTUtil(app['config']))

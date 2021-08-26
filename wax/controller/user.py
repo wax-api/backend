@@ -1,5 +1,7 @@
 from aiohttp.web import Request, Response, json_response, HTTPBadRequest
 from wax.component.jwt import JWTUtil
+from wax.component.pg import pg_cursor
+from wax.component.security import auth_user
 from wax.utils import timestamp
 from wax.json_util import json_dumps
 
@@ -29,8 +31,9 @@ def wax_endpoint(endpoint):
 })
 async def login(request: Request) -> Response:
     req_data = await request.json()
-    await request['pg_cur'].execute('select * from tbl_user limit 1')
-    user_db = await request['pg_cur'].fetchone()
+    cur = pg_cursor(request)
+    await cur.execute('select * from tbl_user limit 1')
+    user_db = await cur.fetchone()
     token = JWTUtil.from_(request.app).encrypt(user_db['id'], 'USER', timestamp(86400))
     return json_response({'token': token})
 
@@ -53,8 +56,9 @@ async def login(request: Request) -> Response:
     }
 })
 async def me_info(request: Request) -> Response:
-    await request['pg_cur'].execute('select * from tbl_user where id=%s limit 1', (request['auth'].user_id, ))
-    user_db = await request['pg_cur'].fetchone()
+    cur = pg_cursor(request)
+    await cur.execute('select * from tbl_user where id=%s limit 1', (auth_user(request).user_id, ))
+    user_db = await cur.fetchone()
     if not user_db:
         return HTTPBadRequest(text='当前用户不存在')
     return json_response(user_db, dumps=json_dumps)

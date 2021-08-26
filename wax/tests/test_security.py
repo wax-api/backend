@@ -1,12 +1,12 @@
 import asyncio
 import time
 from unittest import TestCase
-from wax.component.security import security_middleware, AuthUser
+from wax.component.security import security_middleware, AuthUser, authorized, auth_user
 from wax.component.jwt import JWTUtil
 
 
 async def handler_stub(request):
-    return {'auth': request['auth']}
+    return {'code': 0}
 
 
 class RequestStub(dict):
@@ -25,5 +25,7 @@ class TestSecurityMiddleware(TestCase):
         request_stub.headers.update({'Authorization': f'Bearer {token}'})
         loop = asyncio.get_event_loop()
         result = loop.run_until_complete(security_middleware(request_stub, handler_stub))
-        self.assertEqual(result, {'auth': AuthUser(user_id=7, role='USER')})
+        self.assertTrue(authorized(request_stub))
+        self.assertEqual(auth_user(request_stub), AuthUser(user_id=7, role='USER'))
+        self.assertDictEqual(result, {'code': 0})
         loop.close()

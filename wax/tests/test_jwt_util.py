@@ -14,6 +14,7 @@ class TestJWTUtil(TestCase):
         jwt_util = JWTUtil(None)
         exp = timestamp(100)
         token = jwt_util.encrypt(23, 'ADMIN', exp)
-        self.assertTrue(isinstance(token, str) and len(token) > 30)
+        self.assertIsInstance(token, str)
+        self.assertGreater(len(token), 30)
         payload = jwt_util.decrypt(token)
         self.assertDictEqual(payload, {'uid': 23, 'sub': 'ADMIN', 'exp': exp})

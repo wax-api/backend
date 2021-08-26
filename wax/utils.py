@@ -21,6 +21,16 @@ def eafp(function, default=None):
         return default
 
 
+def setdefault(this, key, function):
+    """
+    Insert key with function result if key is not in the dictionary.
+    Return the value for key at last.
+    """
+    if key not in this:
+        this[key] = function()
+    return this[key]
+
+
 def timestamp(delta=0) -> int:
     """
     Return the integer seconds since the Epoch,
