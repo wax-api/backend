@@ -4,3 +4,4 @@ toml
 lesscli
 pyjwt
 Mako
+jsonschema

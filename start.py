@@ -19,8 +19,8 @@ def main(confpath):
     app.on_cleanup.append(close_pg)
     app.middlewares.append(pg_conn_middleware)
     app.middlewares.append(security_middleware)
-    app.router.add_post('/login', wax.controller.user.login)
-    app.router.add_get('/app/me', wax.controller.user.me_info)
+    app.router.add_route(**wax.controller.user.login)
+    app.router.add_route(**wax.controller.user.me_info)
     web.run_app(app, port=app['config']['lessweb']['port'])
 
 
@@ -35,16 +35,22 @@ def init_pg_tables(confpath):
         async with aiopg.create_pool(**config['lessweb']['postgres']) as pool:
             async with pool.acquire() as conn:
                 async with conn.cursor() as cur:
-                    await cur.execute("""CREATE TABLE tbl_user (
+                    await cur.execute("""DROP TABLE IF EXISTS tbl_user""")
+                    await cur.execute("""
+CREATE TABLE tbl_user (
   id bigint NOT NULL,
   avatar varchar(200),
   truename varchar(100) NOT NULL,
   email varchar(200) NOT NULL UNIQUE,
   acl varchar(200) NOT NULL,
-  createdAt TIMESTAMP NOT NULL DEFAULT NOW(),
-  updatedAt TIMESTAMP NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
   PRIMARY KEY (id)
 )""")
+                    await cur.execute("""
+INSERT INTO tbl_user(id, truename, email, acl)
+VALUES(1, '张三', 'null@qq.com', '') 
+""")
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(go())

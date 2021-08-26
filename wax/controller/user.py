@@ -4,17 +4,12 @@ from wax.component.security import auth_user
 from wax.utils import timestamp
 from wax.json_util import json_dumps
 from wax.mapper.user import UserMapper
+from wax.wax_dsl import endpoint
 
-
-def wax_endpoint(endpoint):
-    def f(g):
-        return g
-    return f
-
-
-@wax_endpoint({
+@endpoint({
     'method': 'POST',
     'path': '/login',
+    'description': '用户登录',
     'requestBody': {
         'schema': {
             'email!': 'string',
@@ -37,19 +32,20 @@ async def login(request: Request) -> Response:
     return json_response({'token': token})
 
 
-@wax_endpoint({
+@endpoint({
     'method': 'GET',
     'path': '/app/me',
+    'description': '查询当前登录用户信息',
     'response': {
         '200': {
             'schema': {
                 'id': 'integer',
-                'avatar': 'string',
+                'avatar?': 'string',
                 'truename': 'string',
                 'email': 'string',
                 'acl': 'string',
-                'createdAt': 'string',
-                'updatedAt': 'string',
+                'created_at': 'string',
+                'updated_at': 'string',
             }
         }
     }
@@ -58,5 +54,5 @@ async def me_info(request: Request) -> Response:
     user_mapper = UserMapper(request)
     user_db = await user_mapper.select_by_id(id=auth_user(request).user_id)
     if not user_db:
-        return HTTPNotFound()
+        raise HTTPNotFound()
     return json_response(user_db, dumps=json_dumps)

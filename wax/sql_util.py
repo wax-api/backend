@@ -6,8 +6,7 @@ from wax.component.pg import pg_cursor, pg_conn
 
 SELECT_ONE = 1
 SELECT_ALL = 2
-WITH_COMMIT = 3
-NOT_COMMIT = 4
+EXECUTE = 3
 
 
 class RegexCollect:
@@ -40,9 +39,6 @@ def _execute(mako_sql, mode):
             return await cursor.fetchone()
         elif mode == SELECT_ALL:
             return await cursor.fetchall() or {}
-        elif mode == WITH_COMMIT:
-            await pg_conn(args[0].request).commit()
-            return None
         else:
             return None
     return lambda method: coro or 1
@@ -56,9 +52,13 @@ def select_all(sql):
     return _execute(sql, SELECT_ALL)
 
 
-def with_commit(sql):
-    return _execute(sql, WITH_COMMIT)
+def insert(sql):
+    return _execute(sql, EXECUTE)
 
 
-def not_commit(sql):
-    return _execute(sql, NOT_COMMIT)
+def update(sql):
+    return _execute(sql, EXECUTE)
+
+
+def delete(sql):
+    return _execute(sql, EXECUTE)

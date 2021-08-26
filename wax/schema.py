@@ -14,6 +14,9 @@ def expand_brief_mode(key, schema):
     if key.endswith('!'):
         key = key[:-1]
         schema[2]['required'] = True
+    elif key.endswith('?'):
+        key = key[:-1]
+        schema[2]['optional'] = True
     if key.endswith('[]'):
         key = key[:-2]
         schema[2]['array'] = True
@@ -36,7 +39,7 @@ def get_full_wax_schema(wax_schema):
         raise WaxSyntaxError(f'invalid schema: {wax_schema}')
 
 
-def to_json_schema(wax_schema) -> dict:
+def to_json_schema(wax_schema, allow_additional=True) -> dict:
     """
     把wax_schema转换为json_schema
     wax_schema定义：https://github.com/wax-api/rfcs/blob/main/WSS.8.md
@@ -79,6 +82,12 @@ def to_json_schema(wax_schema) -> dict:
             ]).strip()
         else:
             schema_extra['enum'] = list(map(caster, enum_value))
+    # global not allow additionalProperties
+    if not allow_additional and schema_type == 'object' and 'properties' in schema_extra:
+        schema_extra['additionalProperties'] = False
+    # Optional
+    if schema_extra.pop('optional', False):
+        return {'type': [schema_type, 'null'], **schema_extra}
     # Union
     if schema_extra.pop('canBeArray', False):
         return {
