@@ -1,5 +1,5 @@
 from aiohttp.web import Request, Response, json_response, HTTPBadRequest
-from wax.jwt_util import JWTUtil
+from wax.component.jwt import JWTUtil
 from wax.utils import timestamp
 from wax.json_util import json_dumps
 
@@ -29,11 +29,9 @@ def wax_endpoint(endpoint):
 })
 async def login(request: Request) -> Response:
     req_data = await request.json()
-    print(req_data)
     await request['pg_cur'].execute('select * from tbl_user limit 1')
     user_db = await request['pg_cur'].fetchone()
-    print(user_db)
-    token = JWTUtil(None).encrypt(user_db['id'], 'USER', timestamp(86400))
+    token = JWTUtil.from_(request.app).encrypt(user_db['id'], 'USER', timestamp(86400))
     return json_response({'token': token})
 
 

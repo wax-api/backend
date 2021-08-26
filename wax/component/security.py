@@ -1,6 +1,6 @@
 from aiohttp.web import middleware, Request, HTTPForbidden
 import re
-from wax.jwt_util import JWTUtil
+from wax.component.jwt import JWTUtil
 from wax.utils import left_strip
 from dataclasses import dataclass
 
@@ -22,7 +22,7 @@ AUTH_RULES = [  # # rules.item => (method, pattern, roles)
 async def security_middleware(request: Request, handler):
     try:
         token = left_strip(request.headers['Authorization'], 'Bearer ')
-        payload = JWTUtil(None).decrypt(token)
+        payload = JWTUtil.from_(request.app).decrypt(token)
         request['auth'] = AuthUser(user_id=payload['uid'], role=payload['sub'])
     except:
         request['auth'] = None

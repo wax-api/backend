@@ -4,6 +4,7 @@ wax-backend is licensed under the Lesspl Public License(v0.3).
 You may obtain a copy of Lesspl Public License(v0.3) at: http://www.lesspl.org
 """
 import time
+import random
 
 
 def eafp(function, default=None):
@@ -37,3 +38,10 @@ def left_strip(this: str, word: str) -> str:
         return this[len(word):]
     else:
         return this
+
+
+def randstr(seq: str, length: int) -> str:
+    """
+    Return random string
+    """
+    return ''.join(random.choice(seq) for _ in range(length))

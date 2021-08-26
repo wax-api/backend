@@ -4,10 +4,8 @@ wax-backend is licensed under the Lesspl Public License(v0.3).
 You may obtain a copy of Lesspl Public License(v0.3) at: http://www.lesspl.org
 """
 
-
-import time
 from unittest import TestCase
-from wax.jwt_util import JWTUtil
+from wax.component.jwt import JWTUtil
 from wax.utils import timestamp
 
 
