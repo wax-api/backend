@@ -21,6 +21,7 @@ def main(confpath):
     app.middlewares.append(security_middleware)
     app.router.add_route(**wax.controller.user.login)
     app.router.add_route(**wax.controller.user.me_info)
+    app.router.add_route(**wax.controller.user.update)
     web.run_app(app, port=app['config']['lessweb']['port'])
 
 

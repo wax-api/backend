@@ -34,6 +34,7 @@ def _execute(mako_sql, mode):
         sql = Template(mako_sql).render(**kwargs)
         print(sql)
         pg_sql, pg_params = rc.build(sql, kwargs)
+        print(pg_params)
         await cursor.execute(pg_sql, pg_params)
         if mode == SELECT_ONE:
             return await cursor.fetchone()

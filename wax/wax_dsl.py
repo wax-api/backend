@@ -63,7 +63,10 @@ def endpoint(endpoint_dsl):
                         request['input']['body'] = request_data
             except jsonschema.ValidationError as e:
                 raise HTTPBadRequest(text=str(e))
-            response = await handler(request)
+            try:
+                response = await handler(request)
+            except AssertionError as e:
+                raise HTTPBadRequest(text=str(e))
             if not isinstance(response, Response):
                 response = json_response(response, dumps=json_dumps)
             try:

@@ -4,7 +4,7 @@ from wax.component.security import auth_user
 from wax.utils import timestamp
 from wax.json_util import json_dumps
 from wax.mapper.user import UserMapper
-from wax.wax_dsl import endpoint, Keys
+from wax.wax_dsl import endpoint, Keys, input_body
 
 @endpoint({
     'method': 'POST',
@@ -24,12 +24,12 @@ from wax.wax_dsl import endpoint, Keys
         }
     }
 })
-async def login(request: Request) -> Response:
+async def login(request: Request):
     req_data = await request.json()
     user_mapper = UserMapper(request)
     user_db = await user_mapper.select_by_id(id=1)
     token = JWTUtil.from_(request.app).encrypt(user_db['id'], 'USER', timestamp(86400))
-    return json_response({'token': token})
+    return {'token': token}
 
 
 @endpoint({
@@ -49,10 +49,39 @@ async def login(request: Request) -> Response:
         }
     }
 })
-async def me_info(request: Request) -> Response:
+async def me_info(request: Request):
     user_mapper = UserMapper(request)
     user_db = await user_mapper.select_by_id(id=auth_user(request).user_id)
     if not user_db:
         raise HTTPNotFound()
     user_db -= Keys('acl')
-    return json_response(user_db, dumps=json_dumps)
+    return user_db
+
+
+@endpoint({
+    'method': 'PUT',
+    'path': '/app/user',
+    'description': '用户登录',
+    'requestBody': {
+        'schema': {
+            'id!': ['integer', '用户ID'],
+            'avatar': 'string',
+            'truename': 'string',
+            'email': 'string',
+        }
+    },
+    'response': {
+        '200': {
+            'schema': {
+                'id': ['integer', '用户ID']
+            }
+        }
+    }
+})
+async def update(request: Request):
+    req_data = input_body(request)
+    auth_user_id = auth_user(request).user_id
+    assert req_data['id'] == auth_user_id, '当前用户无操作权限'
+    user_mapper = UserMapper(request)
+    await user_mapper.update_by_id(**req_data)
+    return {'id': req_data['id']}
