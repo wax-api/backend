@@ -7,6 +7,10 @@ class UserMapper(Mapper):
     async def select_by_id(self, *, id: int) -> dict:
         pass
 
+    @select_one('select * from tbl_email where email=:email limit 1')
+    async def select_by_email(self, *, email: str) -> dict:
+        pass
+
     @update('''update tbl_user set
     % if avatar:
         avatar=:avatar,

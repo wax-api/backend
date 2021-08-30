@@ -1,9 +1,10 @@
 from aiohttp.web import Request, Response, json_response, HTTPNotFound
+import bcrypt
 from wax.component.jwt import JWTUtil
 from wax.component.security import auth_user
 from wax.utils import timestamp
-from wax.json_util import json_dumps
 from wax.mapper.user import UserMapper
+from wax.mapper.auth import AuthMapper
 from wax.wax_dsl import endpoint, Keys, input_body
 
 @endpoint({
@@ -25,9 +26,11 @@ from wax.wax_dsl import endpoint, Keys, input_body
     }
 })
 async def login(request: Request):
-    req_data = await request.json()
     user_mapper = UserMapper(request)
-    user_db = await user_mapper.select_by_id(id=1)
+    req_data = await request.json()
+    user_db = await user_mapper.select_by_email(email=req_data['email'])
+    assert user_db, 'Email不存在'
+    assert bcrypt.checkpw(req_data['password'].encode(), user_db['password'].encode()), 'Email或密码错误'
     token = JWTUtil.from_(request.app).encrypt(user_db['id'], 'USER', timestamp(86400))
     return {'token': token}
 
@@ -85,3 +88,27 @@ async def update(request: Request):
     user_mapper = UserMapper(request)
     await user_mapper.update_by_id(**req_data)
     return {'id': req_data['id']}
+
+
+@endpoint({
+    'method': 'PUT',
+    'path': '/app/user/password',
+    'requestBody': {
+    'schema': {
+            'id!': ['integer', '用户ID'],
+            'password!': ['string', '新密码', {'minLength': 6}],
+        }
+    },
+    'response': {
+        '200': {
+            'id': ['integer', '用户ID']
+        }
+    }
+})
+async def update_password(request: Request):
+    auth_mapper = AuthMapper(request)
+    req_data = input_body(request)
+    user_id = req_data['id']
+    password = bcrypt.hashpw(req_data['password'], bcrypt.gensalt()).decode()
+    await auth_mapper.update_password(user_id=user_id, password=password)
+    return {'id': user_id}

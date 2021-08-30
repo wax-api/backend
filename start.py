@@ -52,6 +52,15 @@ CREATE TABLE tbl_user (
 INSERT INTO tbl_user(id, truename, email, acl)
 VALUES(1, '张三', 'null@qq.com', '') 
 """)
+                    await cur.execute("""DROP TABLE IF EXISTS tbl_auth""")
+                    await cur.execute("""
+CREATE TABLE tbl_auth (
+  user_id bigint NOT NULL,
+  password VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id)
+)""")
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(go())

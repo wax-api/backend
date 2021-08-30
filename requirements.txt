@@ -5,3 +5,4 @@ lesscli
 pyjwt
 Mako
 jsonschema
+bcrypt
