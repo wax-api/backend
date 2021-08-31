@@ -55,3 +55,10 @@ def randstr(seq: str, length: int) -> str:
     Return random string
     """
     return ''.join(random.choice(seq) for _ in range(length))
+
+
+def make_unique_id() -> int:
+    """
+    Return global increasing and unique ID
+    """
+    return int(time.time() * 100000) + random.randint(0, 9999)

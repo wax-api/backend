@@ -65,7 +65,17 @@ CREATE TABLE tbl_auth (
   write_acl varchar(30) [] NOT NULL,
   PRIMARY KEY (user_id)
 )""")
-
+                    await cur.execute("""DROP TABLE IF EXISTS tbl_team""")
+                    await cur.execute("""
+CREATE TABLE tbl_team (
+  id bigint NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  read_acl varchar(30) [] NOT NULL,
+  write_acl varchar(30) [] NOT NULL,
+  PRIMARY KEY (id)
+)""")
     loop = asyncio.get_event_loop()
     loop.run_until_complete(go())
 

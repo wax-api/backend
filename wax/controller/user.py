@@ -95,7 +95,7 @@ async def update(request: Request):
     'path': '/app/user/password',
     'description': '修改密码',
     'requestBody': {
-    'schema': {
+        'schema': {
             'id!': ['integer', '用户ID'],
             'password!': ['string', '新密码', {'minLength': 6}],
         }
