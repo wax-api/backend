@@ -41,9 +41,9 @@ def _execute(mako_sql, mode):
         print(pg_params)
         await cursor.execute(pg_sql, pg_params)
         if mode == SELECT_ONE:
-            return await cursor.fetchone()
+            return await cursor.fetchone() or {}
         elif mode == SELECT_ALL:
-            return await cursor.fetchall() or {}
+            return await cursor.fetchall()
         else:
             return None
     return lambda method: coro or 1

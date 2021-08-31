@@ -43,6 +43,7 @@ CREATE TABLE tbl_user (
   avatar varchar(200),
   truename varchar(100) NOT NULL,
   email varchar(200) NOT NULL UNIQUE,
+  team_id bigint NOT NULL,
   acl varchar(30) [] NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -74,6 +75,16 @@ CREATE TABLE tbl_team (
   updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
   read_acl varchar(30) [] NOT NULL,
   write_acl varchar(30) [] NOT NULL,
+  PRIMARY KEY (id)
+)""")
+                    await cur.execute("""DROP TABLE IF EXISTS tbl_team_user""")
+                    await cur.execute("""
+                    CREATE TABLE tbl_team_user (
+  id bigint NOT NULL,
+  team_id bigint NOT NULL,
+  user_id bigint NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
   PRIMARY KEY (id)
 )""")
     loop = asyncio.get_event_loop()
