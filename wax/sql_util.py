@@ -1,7 +1,8 @@
 from mako.template import Template
 import re
 from re import Match
-from wax.component.pg import pg_cursor, pg_conn
+from wax.component.pg import pg_cursor
+from wax.component.security import auth_user
 
 
 SELECT_ONE = 1
@@ -20,6 +21,8 @@ class RegexCollect:
         return '%s'
 
     def build(self, sql: str, params: dict) -> tuple:
+        sql = sql.replace('[READ]', 'read_acl @> :acl')
+        sql = sql.replace('[WRITE]', 'write_acl @> :acl')
         pattern = r":[\w_]+"
         pg_sql = re.sub(pattern, self.repl, sql)
         pg_params = tuple(params[k[1:]] for k in self.words)
@@ -28,12 +31,13 @@ class RegexCollect:
 
 def _execute(mako_sql, mode):
     async def coro(*args, **kwargs):
-        assert len(args) == 1
+        assert len(args) == 1, 'self requires a mapper instance'
         cursor = pg_cursor(args[0].request)
+        acl = auth_user(args[0].request).acl
         rc = RegexCollect()
         sql = Template(mako_sql).render(**kwargs)
         print(sql)
-        pg_sql, pg_params = rc.build(sql, kwargs)
+        pg_sql, pg_params = rc.build(sql, {**kwargs, 'acl': acl})
         print(pg_params)
         await cursor.execute(pg_sql, pg_params)
         if mode == SELECT_ONE:

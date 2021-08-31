@@ -43,14 +43,16 @@ CREATE TABLE tbl_user (
   avatar varchar(200),
   truename varchar(100) NOT NULL,
   email varchar(200) NOT NULL UNIQUE,
-  acl varchar(200) NOT NULL,
+  acl varchar(30) [] NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  read_acl varchar(30) [] NOT NULL,
+  write_acl varchar(30) [] NOT NULL,
   PRIMARY KEY (id)
 )""")
                     await cur.execute("""
-INSERT INTO tbl_user(id, truename, email, acl)
-VALUES(1, '张三', 'null@qq.com', '') 
+INSERT INTO tbl_user(id, truename, email, acl, read_acl, write_acl)
+VALUES(1, '张三', 'null@qq.com', '{"U", "U1"}', '{"U"}', '{"U1"}') 
 """)
                     await cur.execute("""DROP TABLE IF EXISTS tbl_auth""")
                     await cur.execute("""
@@ -59,6 +61,8 @@ CREATE TABLE tbl_auth (
   password VARCHAR(100) NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  read_acl varchar(30) [] NOT NULL,
+  write_acl varchar(30) [] NOT NULL,
   PRIMARY KEY (user_id)
 )""")
 

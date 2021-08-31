@@ -93,6 +93,7 @@ async def update(request: Request):
 @endpoint({
     'method': 'PUT',
     'path': '/app/user/password',
+    'description': '修改密码',
     'requestBody': {
     'schema': {
             'id!': ['integer', '用户ID'],
