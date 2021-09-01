@@ -16,18 +16,21 @@ from wax.utils import make_unique_id
     },
     'response': {
         '200': {
-            'id': ['integer', '团队ID']
+            'schema': {
+                'id': ['integer', '团队ID']
+            }
         }
     }
 })
 async def insert(team_mapper: TeamMapper, user_mapper: UserMapper, auth_user: AuthUser, body: dict):
     req_data = body['data']
     team_id = make_unique_id()
-    await team_mapper.insert(
+    assert await team_mapper.insert_team(
         id=team_id, name=req_data['name'],
         read_acl=[f'T{team_id}'],
         write_acl=[f'TA{team_id}'],
-    )
+    ) > 0, '创建团队失败，或无权限操作'
+    await team_mapper.add_team_member(id=make_unique_id(), team_id=team_id, user_id=auth_user.user_id)
     await user_mapper.add_acls(id=auth_user.user_id, acls=[f'T{team_id}', f'TA{team_id}'])
     return {'id': team_id}
 
@@ -44,7 +47,9 @@ async def insert(team_mapper: TeamMapper, user_mapper: UserMapper, auth_user: Au
     },
     'response': {
         '200': {
-            'id': ['integer', '团队ID']
+            'schema': {
+                'id': ['integer', '团队ID']
+            }
         }
     }
 })
@@ -65,7 +70,9 @@ async def update(team_mapper: TeamMapper, body: dict):
     },
     'response': {
         '200': {
-            'id': ['integer', '团队ID']
+            'schema': {
+                'id': ['integer', '团队ID']
+            }
         }
     }
 })

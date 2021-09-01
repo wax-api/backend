@@ -35,7 +35,7 @@ async def security_middleware(request: Request, handler):
         auth_user = AuthUser(user_id=user_id, role=payload['sub'], acl=['U', f'U{user_id}'])
         set_request_ctx(request, type_=AuthUser, name='auth_user', instance=auth_user)
         user_mapper = get_request_ctx(request, UserMapper, 'user_mapper')
-        user_db = await user_mapper.select_by_id(id=user_id)
+        user_db = await user_mapper.select_acl_by_id(id=user_id)
         if not user_db:
             raise HTTPBadRequest(text='current user is deleted')
         auth_user.acl = user_db['acl']

@@ -18,15 +18,16 @@ class RegexCollect:
         self.words = []
 
     def repl(self, m: Match):
-        self.words.append(m.group())
-        return '%s'
+        word = m.group()
+        self.words.append(word[2:])
+        return word[0] + '%s'
 
     def build(self, sql: str, params: dict) -> tuple:
-        sql = sql.replace('[READ]', 'read_acl @> :acl')
-        sql = sql.replace('[WRITE]', 'write_acl @> :acl')
-        pattern = r":[\w_]+"
+        sql = sql.replace('READ)', 'read_acl && :acl)')
+        sql = sql.replace('WRITE)', 'write_acl && :acl)')
+        pattern = r"[^:]:[\w_]+"
         pg_sql = re.sub(pattern, self.repl, sql)
-        pg_params = tuple(params[k[1:]] for k in self.words)
+        pg_params = tuple(params[k] for k in self.words)
         return pg_sql, pg_params
 
 
@@ -40,18 +41,20 @@ def _execute(mako_sql, mode):
         sql = Template(mako_sql).render(**kwargs)
         print(sql)
         if mode == SELECT_ONE or mode == SELECT_ALL:
-            assert '[READ]' in sql, 'missing [READ] in sql'
+            if 'READ)' not in sql:
+                raise TypeError('missing (READ) in sql')
         else:
-            assert '[WRITE]' in sql, 'missing [WRITE] in sql'
+            if 'WRITE)' not in sql:
+                raise TypeError('missing (WRITE) in sql')
         pg_sql, pg_params = rc.build(sql, {**kwargs, 'acl': acl})
-        print(pg_params)
+        print(pg_sql, '=>', pg_params)
         await cursor.execute(pg_sql, pg_params)
         if mode == SELECT_ONE:
             return await cursor.fetchone() or {}
         elif mode == SELECT_ALL:
             return await cursor.fetchall()
         else:
-            return None
+            return cursor.rowcount
     return lambda method: coro or 1
 
 

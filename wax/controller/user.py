@@ -25,11 +25,13 @@ from wax.wax_dsl import endpoint, Keys
         }
     }
 })
-async def login(user_mapper: UserMapper, jwtutil: JWTUtil, body: dict):
+async def login(user_mapper: UserMapper, auth_mapper: AuthMapper, jwtutil: JWTUtil, body: dict):
     req_data = body['data']
     user_db = await user_mapper.select_by_email(email=req_data['email'])
     assert user_db, 'Email不存在'
-    assert bcrypt.checkpw(req_data['password'].encode(), user_db['password'].encode()), 'Email或密码错误'
+    auth_db = await auth_mapper.select_by_user_id(user_id=user_db['id'])
+    assert auth_db, '无法登录，联系管理员'
+    assert bcrypt.checkpw(req_data['password'].encode(), auth_db['password'].encode()), 'Email或密码错误'
     token = jwtutil.encrypt(user_db['id'], 'USER', timestamp(86400))
     return {'token': token}
 
@@ -45,6 +47,7 @@ async def login(user_mapper: UserMapper, jwtutil: JWTUtil, body: dict):
                 'avatar?': 'string',
                 'truename': 'string',
                 'email': 'string',
+                'team_id': 'integer',
                 'created_at': 'string',
                 'updated_at': 'string',
             }

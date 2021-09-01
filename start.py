@@ -4,6 +4,7 @@ import aiopg
 import toml
 import lesscli
 import wax.controller.user
+import wax.controller.team
 from wax.component.pg import init_pg, close_pg, pg_conn_middleware
 from wax.component.security import security_middleware
 
@@ -22,6 +23,10 @@ def main(confpath):
     app.router.add_route(**wax.controller.user.login)
     app.router.add_route(**wax.controller.user.me_info)
     app.router.add_route(**wax.controller.user.update)
+    app.router.add_route(**wax.controller.user.update_password)
+    app.router.add_route(**wax.controller.team.insert)
+    app.router.add_route(**wax.controller.team.update)
+    app.router.add_route(**wax.controller.team.delete)
     web.run_app(app, port=app['config']['lessweb']['port'])
 
 
@@ -44,16 +49,16 @@ CREATE TABLE tbl_user (
   truename varchar(100) NOT NULL,
   email varchar(200) NOT NULL UNIQUE,
   team_id bigint NOT NULL,
-  acl varchar(30) [] NOT NULL,
+  acl text [] NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  read_acl varchar(30) [] NOT NULL,
-  write_acl varchar(30) [] NOT NULL,
+  read_acl text [] NOT NULL,
+  write_acl text [] NOT NULL,
   PRIMARY KEY (id)
 )""")
                     await cur.execute("""
-INSERT INTO tbl_user(id, truename, email, acl, read_acl, write_acl)
-VALUES(1, '张三', 'null@qq.com', '{"U", "U1"}', '{"U"}', '{"U1"}') 
+INSERT INTO tbl_user(id, truename, email, team_id, acl, read_acl, write_acl)
+VALUES(1, '张三', 'null@qq.com', 0, '{"U", "U1"}', '{"U"}', '{"U1"}') 
 """)
                     await cur.execute("""DROP TABLE IF EXISTS tbl_auth""")
                     await cur.execute("""
@@ -62,8 +67,8 @@ CREATE TABLE tbl_auth (
   password VARCHAR(100) NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  read_acl varchar(30) [] NOT NULL,
-  write_acl varchar(30) [] NOT NULL,
+  read_acl text [] NOT NULL,
+  write_acl text [] NOT NULL,
   PRIMARY KEY (user_id)
 )""")
                     await cur.execute("""
@@ -77,8 +82,8 @@ CREATE TABLE tbl_team (
   name VARCHAR(200) NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  read_acl varchar(30) [] NOT NULL,
-  write_acl varchar(30) [] NOT NULL,
+  read_acl text [] NOT NULL,
+  write_acl text [] NOT NULL,
   PRIMARY KEY (id)
 )""")
                     await cur.execute("""DROP TABLE IF EXISTS tbl_team_user""")
