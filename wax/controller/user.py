@@ -1,11 +1,11 @@
-from aiohttp.web import Request, Response, json_response, HTTPNotFound
+from aiohttp.web import HTTPNotFound
 import bcrypt
 from wax.component.jwt import JWTUtil
-from wax.component.security import auth_user
+from wax.component.security import AuthUser
 from wax.utils import timestamp
 from wax.mapper.user import UserMapper
 from wax.mapper.auth import AuthMapper
-from wax.wax_dsl import endpoint, Keys, input_body
+from wax.wax_dsl import endpoint, Keys
 
 @endpoint({
     'method': 'POST',
@@ -25,13 +25,12 @@ from wax.wax_dsl import endpoint, Keys, input_body
         }
     }
 })
-async def login(request: Request):
-    user_mapper = UserMapper(request)
-    req_data = await request.json()
+async def login(user_mapper: UserMapper, jwtutil: JWTUtil, body: dict):
+    req_data = body['data']
     user_db = await user_mapper.select_by_email(email=req_data['email'])
     assert user_db, 'Email不存在'
     assert bcrypt.checkpw(req_data['password'].encode(), user_db['password'].encode()), 'Email或密码错误'
-    token = JWTUtil.from_(request.app).encrypt(user_db['id'], 'USER', timestamp(86400))
+    token = jwtutil.encrypt(user_db['id'], 'USER', timestamp(86400))
     return {'token': token}
 
 
@@ -52,9 +51,8 @@ async def login(request: Request):
         }
     }
 })
-async def me_info(request: Request):
-    user_mapper = UserMapper(request)
-    user_db = await user_mapper.select_by_id(id=auth_user(request).user_id)
+async def me_info(user_mapper: UserMapper, auth_user: AuthUser):
+    user_db = await user_mapper.select_by_id(id=auth_user.user_id)
     if not user_db:
         raise HTTPNotFound()
     user_db -= Keys('acl')
@@ -81,11 +79,9 @@ async def me_info(request: Request):
         }
     }
 })
-async def update(request: Request):
-    req_data = input_body(request)
-    auth_user_id = auth_user(request).user_id
-    assert req_data['id'] == auth_user_id, '当前用户无操作权限'
-    user_mapper = UserMapper(request)
+async def update(body: dict, auth_user: AuthUser, user_mapper: UserMapper):
+    req_data = body['data']
+    assert req_data['id'] == auth_user.user_id, '当前用户无操作权限'
     await user_mapper.update_by_id(**req_data)
     return {'id': req_data['id']}
 
@@ -106,10 +102,9 @@ async def update(request: Request):
         }
     }
 })
-async def update_password(request: Request):
-    auth_mapper = AuthMapper(request)
-    req_data = input_body(request)
+async def update_password(body: dict, auth_mapper: AuthMapper):
+    req_data = body['data']
     user_id = req_data['id']
-    password = bcrypt.hashpw(req_data['password'], bcrypt.gensalt()).decode()
+    password = bcrypt.hashpw(req_data['password'].encode(), bcrypt.gensalt()).decode()
     await auth_mapper.update_password(user_id=user_id, password=password)
     return {'id': user_id}

@@ -1,5 +1,6 @@
+from aiohttp.web import Request
 import jwt
-from wax.utils import eafp, randstr, setdefault
+from wax.utils import eafp, randstr
 import string
 
 
@@ -7,7 +8,8 @@ class JWTUtil:
     refname = 'wax.JWTUtil'
     salt: str
 
-    def __init__(self, config):
+    def __init__(self, request: Request):
+        config = request.app['config']
         salt_file = eafp(lambda: config['lessweb']['jwt']['salt_file'])
         if not salt_file:
             seq = string.ascii_letters + string.digits
@@ -24,7 +26,3 @@ class JWTUtil:
         return payload dict or raises jwt.ExpiredSignatureError if the expiration time is in the past
         """
         return jwt.decode(token, self.salt, algorithms='HS256')
-
-    @classmethod
-    def from_(cls, app) -> 'JWTUtil':
-        return setdefault(app, cls.refname, lambda: JWTUtil(app['config']))

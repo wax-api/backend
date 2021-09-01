@@ -66,6 +66,10 @@ CREATE TABLE tbl_auth (
   write_acl varchar(30) [] NOT NULL,
   PRIMARY KEY (user_id)
 )""")
+                    await cur.execute("""
+INSERT INTO tbl_auth(user_id, password, read_acl, write_acl)
+VALUES(1, '$2b$12$29jP3EvsgzaF22k906PdDeflgum5ZalaolH4fbe8aeLxrl1KuwIkG', '{"U1"}', '{"U1"}')
+""")  # password=12345678
                     await cur.execute("""DROP TABLE IF EXISTS tbl_team""")
                     await cur.execute("""
 CREATE TABLE tbl_team (

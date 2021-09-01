@@ -1,10 +1,7 @@
-from aiohttp.web import Request
-
-
-from wax.component.security import auth_user
+from wax.component.security import AuthUser
 from wax.mapper.team import TeamMapper
 from wax.mapper.user import UserMapper
-from wax.wax_dsl import endpoint, input_body, input_path
+from wax.wax_dsl import endpoint
 from wax.utils import make_unique_id
 
 
@@ -23,18 +20,15 @@ from wax.utils import make_unique_id
         }
     }
 })
-async def insert(request: Request):
-    team_mapper = TeamMapper(request)
-    user_mapper = UserMapper(request)
-    user_id = auth_user(request).user_id
-    req_data = input_body(request)
+async def insert(team_mapper: TeamMapper, user_mapper: UserMapper, auth_user: AuthUser, body: dict):
+    req_data = body['data']
     team_id = make_unique_id()
     await team_mapper.insert(
         id=team_id, name=req_data['name'],
         read_acl=[f'T{team_id}'],
         write_acl=[f'TA{team_id}'],
     )
-    await user_mapper.add_acls(id=user_id, acls=[f'T{team_id}', f'TA{team_id}'])
+    await user_mapper.add_acls(id=auth_user.user_id, acls=[f'T{team_id}', f'TA{team_id}'])
     return {'id': team_id}
 
 
@@ -54,9 +48,8 @@ async def insert(request: Request):
         }
     }
 })
-async def update(request: Request):
-    team_mapper = TeamMapper(request)
-    req_data = input_body(request)
+async def update(team_mapper: TeamMapper, body: dict):
+    req_data = body['data']
     await team_mapper.update_by_id(id=req_data['id'], name=req_data['name'])
     return {'id': req_data['id']}
 
@@ -76,8 +69,7 @@ async def update(request: Request):
         }
     }
 })
-async def delete(request: Request):
-    team_mapper = TeamMapper(request)
-    team_id = input_path(request)['id']
+async def delete(team_mapper: TeamMapper, path: dict):
+    team_id = path['id']
     await team_mapper.delete_by_id(id=team_id)
     return {'id': team_id}

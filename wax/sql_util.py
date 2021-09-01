@@ -2,7 +2,8 @@ from mako.template import Template
 import re
 from re import Match
 from wax.component.pg import pg_cursor
-from wax.component.security import auth_user
+from wax.component.security import AuthUser
+from wax.inject_util import get_request_ctx
 
 
 SELECT_ONE = 1
@@ -32,11 +33,16 @@ class RegexCollect:
 def _execute(mako_sql, mode):
     async def coro(*args, **kwargs):
         assert len(args) == 1, 'self requires a mapper instance'
-        cursor = pg_cursor(args[0].request)
-        acl = auth_user(args[0].request).acl
+        request = args[0].request
+        cursor = pg_cursor(request)
+        acl = get_request_ctx(request, AuthUser, 'auth_user').acl
         rc = RegexCollect()
         sql = Template(mako_sql).render(**kwargs)
         print(sql)
+        if mode == SELECT_ONE or mode == SELECT_ALL:
+            assert '[READ]' in sql, 'missing [READ] in sql'
+        else:
+            assert '[WRITE]' in sql, 'missing [WRITE] in sql'
         pg_sql, pg_params = rc.build(sql, {**kwargs, 'acl': acl})
         print(pg_params)
         await cursor.execute(pg_sql, pg_params)
