@@ -27,21 +27,23 @@ AUTH_RULES = [  # # rules.item => (method, pattern, roles)
 
 @middleware
 async def security_middleware(request: Request, handler):
-    from wax.mapper.user import UserMapper
+    from wax.mapper.acl import ACLMapper
     try:
         token = left_strip(request.headers['Authorization'], 'Bearer ')
         payload = get_request_ctx(request, JWTUtil, 'jwtutil').decrypt(token)
         user_id = payload['uid']
         auth_user = AuthUser(user_id=user_id, role=payload['sub'], acl=['U', f'U{user_id}'])
         set_request_ctx(request, type_=AuthUser, name='auth_user', instance=auth_user)
-        user_mapper = get_request_ctx(request, UserMapper, 'user_mapper')
-        user_db = await user_mapper.select_acl_by_id(id=user_id)
-        if not user_db:
-            raise HTTPBadRequest(text='current user is deleted')
-        auth_user.acl = user_db['acl']
     except:
         auth_user = AuthUser(user_id=0, role='GUEST', acl=[])
         set_request_ctx(request, type_=AuthUser, name='auth_user', instance=auth_user)
+    if auth_user.user_id:
+        aclmapper = get_request_ctx(request, ACLMapper, 'aclmapper')
+        user_db = await aclmapper.select_by_user_id(user_id=auth_user.user_id)
+        if not user_db:
+            raise HTTPBadRequest(text='current user is deleted')
+        auth_user.acl.clear()
+        auth_user.acl.extend(user_db['acl'])
     for method, pattern, roles in AUTH_RULES:
         re_pattern = '^' + pattern.replace('/**', '(/.*)?') + '$'
         if (method == '*' or method == request.method) and re.match(re_pattern, request.path):

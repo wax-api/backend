@@ -38,7 +38,7 @@ def _execute(mako_sql, mode):
         cursor = pg_cursor(request)
         acl = get_request_ctx(request, AuthUser, 'auth_user').acl
         rc = RegexCollect()
-        sql = Template(mako_sql).render(**kwargs)
+        sql = Template(mako_sql).render(**kwargs).strip()
         print(sql)
         if mode == SELECT_ONE or mode == SELECT_ALL:
             if 'READ)' not in sql:

@@ -49,7 +49,6 @@ CREATE TABLE tbl_user (
   truename varchar(100) NOT NULL,
   email varchar(200) NOT NULL UNIQUE,
   team_id bigint NOT NULL,
-  acl text [] NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
   read_acl text [] NOT NULL,
@@ -57,8 +56,8 @@ CREATE TABLE tbl_user (
   PRIMARY KEY (id)
 )""")
                     await cur.execute("""
-INSERT INTO tbl_user(id, truename, email, team_id, acl, read_acl, write_acl)
-VALUES(1, '张三', 'null@qq.com', 0, '{"U", "U1"}', '{"U"}', '{"U1"}') 
+INSERT INTO tbl_user(id, truename, email, team_id, read_acl, write_acl)
+VALUES(1, '张三', 'null@qq.com', 0, '{"U"}', '{"U1"}') 
 """)
                     await cur.execute("""DROP TABLE IF EXISTS tbl_auth""")
                     await cur.execute("""
@@ -75,6 +74,21 @@ CREATE TABLE tbl_auth (
 INSERT INTO tbl_auth(user_id, password, read_acl, write_acl)
 VALUES(1, '$2b$12$29jP3EvsgzaF22k906PdDeflgum5ZalaolH4fbe8aeLxrl1KuwIkG', '{"U1"}', '{"U1"}')
 """)  # password=12345678
+                    await cur.execute("""DROP TABLE IF EXISTS tbl_acl""")
+                    await cur.execute("""
+CREATE TABLE tbl_acl (
+  user_id bigint NOT NULL,
+  acl text [] NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  read_acl text [] NOT NULL,
+  write_acl text [] NOT NULL,
+  PRIMARY KEY (user_id)
+)""")
+                    await cur.execute("""
+INSERT INTO tbl_acl(user_id, acl, read_acl, write_acl)
+VALUES(1, '{"U", "U1"}', '{"U1"}', '{"U"}')
+""")
                     await cur.execute("""DROP TABLE IF EXISTS tbl_team""")
                     await cur.execute("""
 CREATE TABLE tbl_team (

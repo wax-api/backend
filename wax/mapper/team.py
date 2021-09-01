@@ -8,15 +8,15 @@ class TeamMapper(Mapper):
         pass
 
     @insert('''insert into tbl_team(id, name, read_acl, write_acl)
-    select :id, :name, :read_acl, T.write_acl 
-    from (select :write_acl as write_acl) T where (T.WRITE)
+    select :id, :name, :read_acl, :write_acl 
+    from (select ARRAY['U'] as write_acl) T where (T.WRITE)
     ''')
     async def insert_team(self, *, id: int, name: str, read_acl: list, write_acl: list) -> int:
         pass
 
     @update('''update tbl_team set 
     % if name:
-        name=:name
+        name=:name,
     % endif
     updated_at=NOW() where id=:id and (WRITE)
     ''')
@@ -31,7 +31,7 @@ class TeamMapper(Mapper):
     select :id, T.id, :user_id AS uid from tbl_team T
     where T.id=:team_id and (T.WRITE) limit 1
     ''')
-    async def add_team_member(self, *, id: int, team_id: int, user_id: int) -> None:
+    async def add_team_member(self, *, id: int, team_id: int, user_id: int) -> int:
         pass
 
     @delete('''delete from tbl_team_user TU

@@ -37,7 +37,8 @@ def params_cast(params, schemas):
     result = {}
     if not params or not schemas:
         return result
-    for key, param_schema in schemas.items():
+    json_schema = to_json_schema(schemas)
+    for key, param_schema in json_schema.get('properties', {}).items():
         if key in params:
             value_str = params[key]
             value_type = param_schema['type']

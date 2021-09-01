@@ -1,6 +1,7 @@
 from wax.component.security import AuthUser
 from wax.mapper.team import TeamMapper
 from wax.mapper.user import UserMapper
+from wax.mapper.acl import ACLMapper
 from wax.wax_dsl import endpoint
 from wax.utils import make_unique_id
 
@@ -22,7 +23,12 @@ from wax.utils import make_unique_id
         }
     }
 })
-async def insert(team_mapper: TeamMapper, user_mapper: UserMapper, auth_user: AuthUser, body: dict):
+async def insert(
+        team_mapper: TeamMapper,
+        user_mapper: UserMapper,
+        aclmapper: ACLMapper,
+        auth_user: AuthUser,
+        body: dict):
     req_data = body['data']
     team_id = make_unique_id()
     assert await team_mapper.insert_team(
@@ -30,8 +36,11 @@ async def insert(team_mapper: TeamMapper, user_mapper: UserMapper, auth_user: Au
         read_acl=[f'T{team_id}'],
         write_acl=[f'TA{team_id}'],
     ) > 0, '创建团队失败，或无权限操作'
-    await team_mapper.add_team_member(id=make_unique_id(), team_id=team_id, user_id=auth_user.user_id)
-    await user_mapper.add_acls(id=auth_user.user_id, acls=[f'T{team_id}', f'TA{team_id}'])
+    team_acl = [f'T{team_id}', f'TA{team_id}']
+    auth_user.acl.extend(team_acl)
+    assert await team_mapper.add_team_member(
+        id=make_unique_id(), team_id=team_id, user_id=auth_user.user_id) > 0, '添加团队成员失败'
+    await aclmapper.add_acls(user_id=auth_user.user_id, acls=team_acl)
     return {'id': team_id}
 
 
@@ -76,7 +85,14 @@ async def update(team_mapper: TeamMapper, body: dict):
         }
     }
 })
-async def delete(team_mapper: TeamMapper, path: dict):
+async def delete(
+        team_mapper: TeamMapper,
+        aclmapper: ACLMapper,
+        auth_user: AuthUser,
+        path: dict):
     team_id = path['id']
+    await team_mapper.remove_team_member(team_id=team_id)  # 必须先删关系，再删团队，不然acl有问题
     await team_mapper.delete_by_id(id=team_id)
+    await aclmapper.remove_acl(user_id=auth_user.user_id, removing_acl=f'T{team_id}')
+    await aclmapper.remove_acl(user_id=auth_user.user_id, removing_acl=f'TA{team_id}')
     return {'id': team_id}
