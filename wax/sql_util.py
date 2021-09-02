@@ -8,7 +8,8 @@ from wax.inject_util import get_request_ctx
 
 SELECT_ONE = 1
 SELECT_ALL = 2
-EXECUTE = 3
+SELECT_RANGE = 3
+EXECUTE = 4
 
 
 class RegexCollect:
@@ -49,7 +50,15 @@ def _execute(mako_sql, mode):
         pg_sql, pg_params = rc.build(sql, {**kwargs, 'acl': acl})
         print(pg_sql, '=>', pg_params)
         await cursor.execute(pg_sql, pg_params)
-        if mode == SELECT_ONE:
+        if mode == SELECT_RANGE:
+            items = await cursor.fetchall()
+            count_sql = f'SELECT COUNT(*) AS total FROM ({sql}) AS T'
+            pg_sql, pg_params = rc.build(count_sql, {**kwargs, 'acl': acl, 'limit': None, 'offset': 0})
+            print(pg_sql, '=>', pg_params)
+            await cursor.execute(pg_sql, pg_params)
+            total = await cursor.fetchone()
+            return {**total, 'offset': kwargs.get('offset'), 'limit': kwargs.get('limit'), 'list': items}
+        elif mode == SELECT_ONE:
             return await cursor.fetchone() or {}
         elif mode == SELECT_ALL:
             return await cursor.fetchall()
@@ -64,6 +73,10 @@ def select_one(sql):
 
 def select_all(sql):
     return _execute(sql, SELECT_ALL)
+
+
+def select_range(sql):
+    return _execute(sql, SELECT_RANGE)
 
 
 def insert(sql):
