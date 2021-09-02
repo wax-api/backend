@@ -3,6 +3,8 @@ import asyncio
 import aiopg
 import toml
 import lesscli
+import pathlib
+import os
 import wax.controller.user
 import wax.controller.team
 from wax.component.pg import init_pg, close_pg, pg_conn_middleware
@@ -30,94 +32,65 @@ def main(confpath):
     web.run_app(app, port=app['config']['lessweb']['port'])
 
 
+@lesscli.add_option('init', type='bool', help='initialize migration')
+@lesscli.add_option('upgrade_version', short='-u', long='--up', help='upgrade, head means the latest version')
+@lesscli.add_option('downgrade_version', short='-d', long='--down', help='downgrade')
 @lesscli.add_option('confpath', default='config.toml', help='configure file (.toml format) path, default: config.toml')
-def init_pg_tables(confpath):
+def init_pg_tables(*args, **kwargs):
     """
     init postgres tables
     """
+    confpath = kwargs['confpath']
     config = toml.loads(open(confpath).read())
+    upgrade_version = kwargs['upgrade_version']
+    downgrade_version = kwargs['downgrade_version']
+    init_mode = kwargs['init']
+    assert bool(upgrade_version) + bool(downgrade_version) + bool(init_mode) == 1, 'wrong arguments. -h for help'
+
+    def parse_version(filename):
+        return filename.lower().replace('.sql', '').lstrip('v')
+
+    def version_cmp_key(filename):
+        return tuple(map(int, parse_version(filename).split('.')))
 
     async def go():
         async with aiopg.create_pool(**config['lessweb']['postgres']) as pool:
             async with pool.acquire() as conn:
                 async with conn.cursor() as cur:
-                    await cur.execute("""DROP TABLE IF EXISTS tbl_user""")
-                    await cur.execute("""
-CREATE TABLE tbl_user (
-  id bigint NOT NULL,
-  avatar varchar(200),
-  truename varchar(100) NOT NULL,
-  email varchar(200) NOT NULL UNIQUE,
-  team_id bigint NOT NULL,
+                    if init_mode:
+                        await cur.execute("""CREATE TABLE wax_schema_history (
+  version varchar(40) NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  read_acl text [] NOT NULL,
-  write_acl text [] NOT NULL,
-  PRIMARY KEY (id)
+  PRIMARY KEY (version)
 )""")
-                    await cur.execute("""
-INSERT INTO tbl_user(id, truename, email, team_id, read_acl, write_acl)
-VALUES(1, '张三', 'null@qq.com', 0, '{"U"}', '{"U1"}') 
-""")
-                    await cur.execute("""DROP TABLE IF EXISTS tbl_auth""")
-                    await cur.execute("""
-CREATE TABLE tbl_auth (
-  user_id bigint NOT NULL,
-  password VARCHAR(100) NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  read_acl text [] NOT NULL,
-  write_acl text [] NOT NULL,
-  PRIMARY KEY (user_id)
-)""")
-                    await cur.execute("""
-INSERT INTO tbl_auth(user_id, password, read_acl, write_acl)
-VALUES(1, '$2b$12$29jP3EvsgzaF22k906PdDeflgum5ZalaolH4fbe8aeLxrl1KuwIkG', '{"U1"}', '{"U1"}')
-""")  # password=12345678
-                    await cur.execute("""DROP TABLE IF EXISTS tbl_acl""")
-                    await cur.execute("""
-CREATE TABLE tbl_acl (
-  user_id bigint NOT NULL,
-  acl text [] NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  read_acl text [] NOT NULL,
-  write_acl text [] NOT NULL,
-  PRIMARY KEY (user_id)
-)""")
-                    await cur.execute("""
-INSERT INTO tbl_acl(user_id, acl, read_acl, write_acl)
-VALUES(1, '{"U", "U1", "T1", "TA1"}', '{"U1"}', '{"U"}')
-""")
-                    await cur.execute("""DROP TABLE IF EXISTS tbl_team""")
-                    await cur.execute("""
-CREATE TABLE tbl_team (
-  id bigint NOT NULL,
-  name VARCHAR(200) NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  read_acl text [] NOT NULL,
-  write_acl text [] NOT NULL,
-  PRIMARY KEY (id)
-)""")
-                    await cur.execute("""
-INSERT INTO tbl_team(id, name, read_acl, write_acl)
-VALUES(1, "Wax Team", '{"T1"}', '{"TA1"}')
-""")
-                    await cur.execute("""DROP TABLE IF EXISTS tbl_team_user""")
-                    await cur.execute("""
-                    CREATE TABLE tbl_team_user (
-  id bigint NOT NULL,
-  team_id bigint NOT NULL,
-  user_id bigint NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (id)
-)""")
-                    await cur.execute("""
-INSERT INTO tbl_team_user(id, team_id, user_id)
-VALUES(1, 1, 1)
-""")
+                    elif upgrade_version:
+                        up_path = pathlib.Path('migration/up/')
+                        up_path_files = os.listdir('migration/up/')
+                        up_path_files.sort(key=version_cmp_key)
+                        for filename in up_path_files:
+                            version = parse_version(filename)
+                            await cur.execute('select version from wax_schema_history where version=%s', (version,))
+                            if not await cur.fetchone():
+                                sql_content = (up_path / filename).open().read().strip()
+                                await cur.execute(sql_content)
+                                await cur.execute('insert into wax_schema_history(version) values (%s)', (version,))
+                                print(f'upgrade: {version}')
+                            if version == parse_version(upgrade_version):
+                                break
+                    elif downgrade_version:
+                        down_path = pathlib.Path('migration/down/')
+                        down_path_files = os.listdir('migration/down/')
+                        down_path_files.sort(key=version_cmp_key, reverse=True)
+                        for filename in down_path_files:
+                            version = parse_version(filename)
+                            await cur.execute('select version from wax_schema_history where version=%s', (version,))
+                            if await cur.fetchone():
+                                sql_content = (down_path / filename).open().read().strip()
+                                await cur.execute(sql_content)
+                                await cur.execute('delete from wax_schema_history where version=%s', (version,))
+                                print(f'downgrade: {version}')
+                            if version == parse_version(downgrade_version):
+                                break
     loop = asyncio.get_event_loop()
     loop.run_until_complete(go())
 
@@ -125,5 +98,5 @@ VALUES(1, 1, 1)
 if __name__ == '__main__':
     cli = lesscli.Application('wax backend')
     cli.add('server', main)
-    cli.add('create_table', init_pg_tables)
+    cli.add('migrate', init_pg_tables)
     cli.run()

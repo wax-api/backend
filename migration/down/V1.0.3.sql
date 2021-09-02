@@ -1,0 +1,1 @@
+DELETE FROM tbl_auth WHERE user_id=1
