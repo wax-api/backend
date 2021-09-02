@@ -22,7 +22,7 @@ from wax.wax_dsl import endpoint
         }
     }
 })
-async def query():  # todo 查询分类列表
+async def query_list():  # todo 查询分类列表
     pass
 
 

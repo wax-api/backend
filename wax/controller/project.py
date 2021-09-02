@@ -20,7 +20,7 @@ from wax.wax_dsl import endpoint
         }
     }
 })
-async def create_project():  # todo 创建项目
+async def create():  # todo 创建项目
     pass
 
 
@@ -50,7 +50,7 @@ async def create_project():  # todo 创建项目
         }
     }
 })
-async def list_project():  # todo 查询项目列表
+async def query_list():  # todo 查询项目列表
     pass
 
 
@@ -89,14 +89,26 @@ async def list_member():  # todo 查询团队成员列表
 
 @endpoint({
     'method': 'PUT',
-    'path': '/app/project/member',
+    'path': '/app/project/{id}/member',
     'description': '添加或编辑项目成员',
+    'requestParam': {
+        'path': {
+            'id!': 'integer',
+        }
+    },
     'requestBody': {
         'schema': {
             'user_id!': ['integer', '用户ID'],
             'role!': ['string', '成员角色', {'enum': ['admin', 'member']}],
         }
+    },
+    'response': {
+        '200': {
+            'schema': {
+                'id': ['integer', '项目ID']
+            }
+        }
     }
 })
-async def edit_member():  # todo 添加或编辑项目成员
+async def save_member():  # todo 添加或编辑项目成员
     pass

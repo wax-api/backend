@@ -94,11 +94,15 @@ async def update(body: dict, auth_user: AuthUser, user_mapper: UserMapper):
 
 @endpoint({
     'method': 'PUT',
-    'path': '/app/user/password',
+    'path': '/app/user/{id}/password',
     'description': '修改密码',
+    'requestParam': {
+        'path': {
+            'id!': 'integer',
+        }
+    },
     'requestBody': {
         'schema': {
-            'id!': ['integer', '用户ID'],
             'password!': ['string', '新密码', {'minLength': 6}],
         }
     },

@@ -33,7 +33,7 @@ async def query_list():  # todo 查询mock列表
 @endpoint({
     'method': 'GET',
     'path': '/app/mock/{id}',
-    'description': '创建mock',
+    'description': '查询mock详情',
     'requestParam': {
         'path': {
             'id!': 'integer',
@@ -102,7 +102,6 @@ async def insert():  # todo 创建mock
             'content': 'string',
             'type': ['mock类型', {'enum': ['mockjs', 'json']}],
             'headers': 'string',
-            'active': 'integer',
         }
     },
     'response': {
@@ -135,4 +134,25 @@ async def update():  # todo 修改mock
     }
 })
 async def delete():  # todo 删除mock
+    pass
+
+
+@endpoint({
+    'method': 'PUT',
+    'path': '/app/mock/{id}/active',
+    'description': '设置生效mock',
+    'requestParam': {
+        'path': {
+            'id!': 'integer',
+        }
+    },
+    'response': {
+        '200': {
+            'schema': {
+                'id': ['integer', 'mock ID']
+            }
+        }
+    }
+})
+async def active():  # todo 设置生效mock
     pass

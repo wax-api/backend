@@ -99,9 +99,12 @@ async def delete(
 
 @endpoint({
     'method': 'DELETE',
-    'path': '/app/team/member',
+    'path': '/app/team/{id}/member',
     'description': '删除团队成员',
     'requestParam': {
+        'path': {
+            'id!': 'integer',
+        },
         'query': {
             'user_id': 'integer',
         }
@@ -118,9 +121,12 @@ async def remove_member():  # todo 删除团队成员
 
 @endpoint({
     'method': 'GET',
-    'path': '/app/team/member',
+    'path': '/app/team/{id}/member',
     'description': '查询团队成员列表',
     'requestParam': {
+        'path': {
+            'id!': 'integer',
+        },
         'query': {
             'keyword': 'string',
             'project_id': 'integer',

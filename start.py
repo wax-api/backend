@@ -5,8 +5,13 @@ import toml
 import lesscli
 import pathlib
 import os
-import wax.controller.user
+import wax.controller.directory
+import wax.controller.entity
+import wax.controller.interface
+import wax.controller.mock
+import wax.controller.project
 import wax.controller.team
+import wax.controller.user
 from wax.component.pg import init_pg, close_pg, pg_conn_middleware
 from wax.component.security import security_middleware
 
@@ -26,9 +31,36 @@ def main(confpath):
     app.router.add_route(**wax.controller.user.me_info)
     app.router.add_route(**wax.controller.user.update)
     app.router.add_route(**wax.controller.user.update_password)
+    app.router.add_route(**wax.controller.user.create_user)
     app.router.add_route(**wax.controller.team.insert)
     app.router.add_route(**wax.controller.team.update)
     app.router.add_route(**wax.controller.team.delete)
+    app.router.add_route(**wax.controller.team.remove_member)
+    app.router.add_route(**wax.controller.team.list_member)
+    app.router.add_route(**wax.controller.project.create)
+    app.router.add_route(**wax.controller.project.query_list)
+    app.router.add_route(**wax.controller.project.list_member)
+    app.router.add_route(**wax.controller.project.save_member)
+    app.router.add_route(**wax.controller.mock.query_list)
+    app.router.add_route(**wax.controller.mock.query_detail)
+    app.router.add_route(**wax.controller.mock.insert)
+    app.router.add_route(**wax.controller.mock.update)
+    app.router.add_route(**wax.controller.mock.delete)
+    app.router.add_route(**wax.controller.mock.active)
+    app.router.add_route(**wax.controller.interface.query_list)
+    app.router.add_route(**wax.controller.interface.query_detail)
+    app.router.add_route(**wax.controller.interface.insert)
+    app.router.add_route(**wax.controller.interface.delete)
+    app.router.add_route(**wax.controller.interface.update)
+    app.router.add_route(**wax.controller.entity.query_list)
+    app.router.add_route(**wax.controller.entity.query_detail)
+    app.router.add_route(**wax.controller.entity.insert)
+    app.router.add_route(**wax.controller.entity.update)
+    app.router.add_route(**wax.controller.entity.delete)
+    app.router.add_route(**wax.controller.directory.query_list)
+    app.router.add_route(**wax.controller.directory.insert)
+    app.router.add_route(**wax.controller.directory.delete)
+    app.router.add_route(**wax.controller.directory.update)
     web.run_app(app, port=app['config']['lessweb']['port'])
 
 
