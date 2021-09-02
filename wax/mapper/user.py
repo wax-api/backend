@@ -1,5 +1,5 @@
 from wax.mapper import Mapper
-from wax.sql_util import select_one, update
+from wax.sql_util import select_one, update, insert
 
 
 class UserMapper(Mapper):
@@ -26,5 +26,12 @@ class UserMapper(Mapper):
     updated_at=NOW() where id=:id and (WRITE)
     ''')
     async def update_by_id(self, *, id: int, avatar: str=None, truename: str=None, email: str=None) -> None:
+        pass
+
+    @insert('''insert into tbl_user(id, truename, email, team_id, read_acl, write_acl)
+    select :id, :truename, :email, :team_id, :read_acl, :write_acl
+    from (select ARRAY['U'] as write_acl) T where (T.WRITE)
+    ''')
+    async def insert_user(self, *, id: int, truename: str, email: str, team_id: int, read_acl: list, write_acl: list) -> int:
         pass
 

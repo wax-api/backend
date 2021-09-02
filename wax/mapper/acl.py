@@ -1,5 +1,5 @@
 from wax.mapper import Mapper
-from wax.sql_util import update, select_one
+from wax.sql_util import update, select_one, insert
 
 
 class ACLMapper(Mapper):
@@ -22,4 +22,11 @@ class ACLMapper(Mapper):
 
     @update('update tbl_acl set acl=array_remove(acl, :removing_acl), updated_at=NOW() where user_id=:user_id and (WRITE)')
     async def remove_acl(self, *, user_id: int, removing_acl: str) -> None:
+        pass
+
+    @insert('''insert into tbl_acl(user_id, acl, read_acl, write_acl)
+    select :user_id, :acl, :read_acl, :write_acl
+    from (select ARRAY['U'] as write_acl) T where (T.WRITE)
+    ''')
+    async def insert_acl(self, *, user_id: int, acl: list, read_acl: list, write_acl: list):
         pass

@@ -25,7 +25,6 @@ from wax.utils import make_unique_id
 })
 async def insert(
         team_mapper: TeamMapper,
-        user_mapper: UserMapper,
         aclmapper: ACLMapper,
         auth_user: AuthUser,
         body: dict):

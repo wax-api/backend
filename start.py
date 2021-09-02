@@ -87,7 +87,7 @@ CREATE TABLE tbl_acl (
 )""")
                     await cur.execute("""
 INSERT INTO tbl_acl(user_id, acl, read_acl, write_acl)
-VALUES(1, '{"U", "U1"}', '{"U1"}', '{"U"}')
+VALUES(1, '{"U", "U1", "T1", "TA1"}', '{"U1"}', '{"U"}')
 """)
                     await cur.execute("""DROP TABLE IF EXISTS tbl_team""")
                     await cur.execute("""
@@ -100,6 +100,10 @@ CREATE TABLE tbl_team (
   write_acl text [] NOT NULL,
   PRIMARY KEY (id)
 )""")
+                    await cur.execute("""
+INSERT INTO tbl_team(id, name, read_acl, write_acl)
+VALUES(1, "Wax Team", '{"T1"}', '{"TA1"}')
+""")
                     await cur.execute("""DROP TABLE IF EXISTS tbl_team_user""")
                     await cur.execute("""
                     CREATE TABLE tbl_team_user (
@@ -110,6 +114,10 @@ CREATE TABLE tbl_team (
   updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
   PRIMARY KEY (id)
 )""")
+                    await cur.execute("""
+INSERT INTO tbl_team_user(id, team_id, user_id)
+VALUES(1, 1, 1)
+""")
     loop = asyncio.get_event_loop()
     loop.run_until_complete(go())
 
