@@ -95,3 +95,59 @@ async def delete(
     await aclmapper.remove_acl(user_id=auth_user.user_id, removing_acl=f'T{team_id}')
     await aclmapper.remove_acl(user_id=auth_user.user_id, removing_acl=f'TA{team_id}')
     return {'id': team_id}
+
+
+@endpoint({
+    'method': 'DELETE',
+    'path': '/app/team/member',
+    'description': '删除团队成员',
+    'requestParam': {
+        'query': {
+            'user_id': 'integer',
+        }
+    },
+    'response': {
+        '200': {
+            'id': ['integer', '用户ID']
+        }
+    }
+})
+async def remove_member():  # todo 删除团队成员
+    pass
+
+
+@endpoint({
+    'method': 'GET',
+    'path': '/app/team/member',
+    'description': '查询团队成员列表',
+    'requestParam': {
+        'query': {
+            'keyword': 'string',
+            'project_id': 'integer',
+            'offset': 'integer',
+            'limit': 'integer',
+        }
+    },
+    'response': {
+        '200': {
+            'schema': {
+                'total': 'integer',
+                'offset': 'integer',
+                'limit': 'integer',
+                'list[]': {
+                    'id': ['integer', '用户ID'],
+                    'avatar?': 'string',
+                    'truename': 'string',
+                    'email': 'string',
+                    'team_id': 'integer',
+                    'created_at': 'string',
+                    'updated_at': 'string',
+                    'team_role?': ['string', {'enum': ['admin', 'member']}],
+                    'project_role?': ['string', {'enum': ['admin', 'member']}]
+                }
+            }
+        }
+    }
+})
+async def list_member():  # todo 查询团队成员列表
+    pass
