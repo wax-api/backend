@@ -54,9 +54,12 @@ def endpoint(endpoint_dsl):
         async def coro(request: Request):
             try:
                 if request_param_dsl := endpoint_dsl.get('requestParam', {}):
-                    set_request_ctx(request, type_=dict, name='query', instance=params_cast(request.query, request_param_dsl.get('query')))
+                    query_dict = params_cast(request.query, request_param_dsl.get('query'))
+                    set_request_ctx(request, type_=dict, name='query', instance=query_dict)
                     set_request_ctx(request, type_=dict, name='path', instance=params_cast(request.match_info, request_param_dsl.get('path')))
                     set_request_ctx(request, type_=dict, name='header', instance=params_cast(request.headers, request_param_dsl.get('header')))
+                    set_request_ctx(request, type_=int, name='offset', instance=max(query_dict.get('offset', 0), 0))
+                    set_request_ctx(request, type_=int, name='limit', instance=min(1000, max(query_dict.get('limit', 10), 1)))
                 if request_body_dsl := endpoint_dsl.get('requestBody'):
                     if '/json' in request_param_dsl.get('contentType', 'application/json'):
                         request_data = await request.json()

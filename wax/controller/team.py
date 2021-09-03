@@ -1,9 +1,8 @@
 from wax.component.security import AuthUser
 from wax.mapper.team import TeamMapper
-from wax.mapper.user import UserMapper
 from wax.mapper.acl import ACLMapper
 from wax.wax_dsl import endpoint
-from wax.utils import make_unique_id
+from wax.utils import make_unique_id, eafp
 
 
 @endpoint({
@@ -155,5 +154,8 @@ async def remove_member():  # todo 删除团队成员
         }
     }
 })
-async def list_member():  # todo 查询团队成员列表
-    pass
+async def list_member(team_mapper: TeamMapper, path: dict, query: dict, offset: int, limit: int):
+    team_id = path['team_id']
+    keyword = eafp(lambda: '%' + query['keyword'] + '%')
+    project_id = query.get('project_id')  # todo 查询project_role
+    return await team_mapper.select_team_member(offset=offset, limit=limit, team_id=team_id, keyword=keyword)
