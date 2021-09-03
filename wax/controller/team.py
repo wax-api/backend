@@ -86,13 +86,12 @@ async def update(team_mapper: TeamMapper, body: dict):
 async def delete(
         team_mapper: TeamMapper,
         aclmapper: ACLMapper,
-        auth_user: AuthUser,
         path: dict):
     team_id = path['id']
     await team_mapper.remove_team_member(team_id=team_id)  # 必须先删关系，再删团队，不然acl有问题
     await team_mapper.delete_by_id(id=team_id)
-    await aclmapper.remove_acl(user_id=auth_user.user_id, removing_acl=f'T{team_id}')
-    await aclmapper.remove_acl(user_id=auth_user.user_id, removing_acl=f'TA{team_id}')
+    await aclmapper.remove_acl(acls=[f'T{team_id}', f'TA{team_id}'], removing_acl=f'T{team_id}')
+    await aclmapper.remove_acl(acls=[f'T{team_id}', f'TA{team_id}'], removing_acl=f'TA{team_id}')
     return {'id': team_id}
 
 
@@ -105,7 +104,7 @@ async def delete(
             'id!': 'integer',
         },
         'query': {
-            'user_id': 'integer',
+            'user_id!': 'integer',
         }
     },
     'response': {
@@ -114,8 +113,17 @@ async def delete(
         }
     }
 })
-async def remove_member():  # todo 删除团队成员
-    pass
+async def remove_member(
+        team_mapper: TeamMapper,
+        aclmapper: ACLMapper,
+        path: dict,
+        query: dict):
+    team_id = path['id']
+    user_id = query['user_id']
+    await team_mapper.remove_team_member(team_id=team_id, user_id=user_id)
+    await aclmapper.remove_acl(acls=[f'U{user_id}'], removing_acl=f'T{team_id}')
+    await aclmapper.remove_acl(acls=[f'U{user_id}'], removing_acl=f'TA{team_id}')
+    return {'id': user_id}
 
 
 @endpoint({

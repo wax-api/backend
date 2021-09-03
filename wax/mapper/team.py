@@ -36,9 +36,13 @@ class TeamMapper(Mapper):
 
     @delete('''delete from tbl_team_user TU
      using tbl_team T
-     where T.id=TU.team_id and T.id=:team_id and (T.WRITE) 
+     where T.id=TU.team_id and T.id=:team_id
+     % if user_id:
+        and TU.user_id=:user_id
+     % endif 
+     and (T.WRITE) 
     ''')
-    async def remove_team_member(self, *, team_id: int) -> None:
+    async def remove_team_member(self, *, team_id: int, user_id: int) -> None:
         pass
 
     @select_range('''select U.id, U.avatar, U.truename, U.email, U.created_at, U.updated_at, TU.role AS team_role
