@@ -45,16 +45,29 @@ class TeamMapper(Mapper):
     async def remove_team_member(self, *, team_id: int, user_id: int) -> None:
         pass
 
-    @select_range('''select U.id, U.avatar, U.truename, U.email, U.created_at, U.updated_at, TU.role AS team_role
+    @select_range('''select U.id, U.avatar, U.truename, U.email, U.created_at, U.updated_at
+    ,TU.role AS team_role
+    % if project_id:
+        ,PU.role AS project_role
+    % else
+        ,null AS project_role
+    % endif
     from tbl_team_user TU 
     left join tbl_user U on TU.user_id=U.id
     left join tbl_team T on T.id=:team_id
+    % if project_id:
+        left join tbl_project_user PU on PU.user_id=TU.user_id and PU.project_id=:project_id
+        left join tbl_project P on P.id=PU.project_id
+    % endif
     where TU.team_id=:team_id
     % if keyword:
         and (U.truename LIKE :keyword or U.email LIKE :keyword)
     % endif
     and (T.READ)
+    % if project_id:
+        and (P.READ)
+    % endif
     order by Tu.id desc limit :limit offset :offset
     ''')
-    async def select_team_member(self, *, offset: int, limit: int, team_id: int, keyword: str) -> list:
+    async def select_team_member(self, *, offset: int, limit: int, team_id: int, keyword: str, project_id: int) -> list:
         pass

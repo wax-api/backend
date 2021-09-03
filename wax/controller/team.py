@@ -155,7 +155,7 @@ async def remove_member(
                     'team_id': 'integer',
                     'created_at': 'string',
                     'updated_at': 'string',
-                    'team_role?': ['string', {'enum': ['admin', 'member']}],
+                    'team_role': ['string', {'enum': ['admin', 'member']}],
                     'project_role?': ['string', {'enum': ['admin', 'member']}]
                 }
             }
@@ -165,5 +165,5 @@ async def remove_member(
 async def list_member(team_mapper: TeamMapper, path: dict, query: dict, offset: int, limit: int):
     team_id = path['team_id']
     keyword = eafp(lambda: '%' + query['keyword'] + '%')
-    project_id = query.get('project_id')  # todo 查询project_role
-    return await team_mapper.select_team_member(offset=offset, limit=limit, team_id=team_id, keyword=keyword)
+    project_id = query.get('project_id')
+    return await team_mapper.select_team_member(offset=offset, limit=limit, team_id=team_id, keyword=keyword, project_id=project_id)

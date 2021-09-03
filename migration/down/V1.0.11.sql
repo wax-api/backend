@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS tbl_project_user
