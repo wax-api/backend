@@ -54,7 +54,7 @@ def _execute(mako_sql, mode):
             print(pg_sql, '=>', pg_params)
             await cursor.execute(pg_sql, pg_params)
             total = await cursor.fetchone()
-            return {**total, 'offset': kwargs.get('offset'), 'limit': kwargs.get('limit'), 'list': items}
+            return {**total, 'offset': kwargs.get('offset'), 'list': items}
         elif mode == SELECT_ONE:
             return await cursor.fetchone() or {}
         elif mode == SELECT_ALL:

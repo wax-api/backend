@@ -217,6 +217,7 @@ async def save_member(project_mapper: ProjectMapper, aclmapper: ACLMapper, path:
         await aclmapper.add_acls(user_id=user_id, acls=[f'PA{project_id}', f'P{project_id}'])
     else:
         await aclmapper.add_acls(user_id=user_id, acls=[f'P{project_id}'])
+    # todo 同步directory, entity, interface, mock的read_acl和write_acl
     return {'id': project_id}
 
 

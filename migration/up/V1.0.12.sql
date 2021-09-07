@@ -1,9 +1,9 @@
-CREATE TABLE tbl_project (
+CREATE TABLE tbl_directory (
   id bigint NOT NULL,
-  team_id bigint NOT NULL,
-  name varchar(100) NOT NULL,
-  remark text NOT NULL,
-  visibility varchar(20) NOT NULL,
+  project_id bigint NOT NULL,
+  name varchar(200) NOT NULL,
+  parent bigint NOT NULL,
+  position int NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
   read_acl text [] NOT NULL,

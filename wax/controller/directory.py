@@ -1,4 +1,7 @@
 from wax.wax_dsl import endpoint
+from wax.mapper.directory import DirectoryMapper
+from wax.component.security import AuthUser
+from wax.utils import make_unique_id
 
 
 @endpoint({
@@ -32,8 +35,10 @@ async def query_list():  # todo 查询分类列表
     'description': '创建接口分类',
     'requestBody': {
         'schema': {
+            'project_id!': 'integer',
             'name!': 'string',
-            'parent': 'integer',
+            'parent!': 'integer',
+            'position!': 'integer'
         }
     },
     'response': {
@@ -44,8 +49,19 @@ async def query_list():  # todo 查询分类列表
         }
     }
 })
-async def insert():  # todo 创建接口分类
-    pass
+async def insert(directory_mapper: DirectoryMapper, auth_user: AuthUser, body: dict):
+    req_data = body['data']
+    project_id = req_data['project_id']
+    assert f'P{project_id}' in auth_user.acl, '无创建接口分类权限'
+    directory_id = make_unique_id()
+    await directory_mapper.insert_directory(
+        id=directory_id,
+        project_id=project_id,
+        name=req_data['name'],
+        parent=req_data['parent'],
+        position=req_data['position'],
+    )
+    return {'id': directory_id}
 
 
 @endpoint({
