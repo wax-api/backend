@@ -41,12 +41,9 @@ def _execute(mako_sql, mode):
         rc = RegexCollect()
         sql = Template(mako_sql).render(**kwargs).strip()
         print(sql)
-        if mode == SELECT_ONE or mode == SELECT_ALL:
-            if 'READ)' not in sql:
-                raise TypeError('missing (READ) in sql')
-        else:
-            if 'WRITE)' not in sql:
-                raise TypeError('missing (WRITE) in sql')
+        if mode == SELECT_ONE or mode == SELECT_ALL or mode == SELECT_RANGE:
+            if 'READ)' not in sql and 'WRITE)' not in sql :
+                raise TypeError('missing (READ) or (WRITE) in sql')
         pg_sql, pg_params = rc.build(sql, {**kwargs, 'acl': acl})
         print(pg_sql, '=>', pg_params)
         await cursor.execute(pg_sql, pg_params)

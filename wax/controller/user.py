@@ -68,7 +68,7 @@ async def me_info(user_mapper: UserMapper, auth_user: AuthUser):
 @endpoint({
     'method': 'PUT',
     'path': '/app/user',
-    'description': '用户登录',
+    'description': '编辑用户信息',
     'requestBody': {
         'schema': {
             'id!': ['integer', '用户ID'],
@@ -85,9 +85,9 @@ async def me_info(user_mapper: UserMapper, auth_user: AuthUser):
         }
     }
 })
-async def update(body: dict, auth_user: AuthUser, user_mapper: UserMapper):
+async def update(body: dict, user_mapper: UserMapper):
     req_data = body['data']
-    assert req_data['id'] == auth_user.user_id, '当前用户无操作权限'
+    assert await user_mapper.writable(id=req_data['id']), '编辑用户失败'
     await user_mapper.update_by_id(**req_data)
     return {'id': req_data['id']}
 
@@ -115,6 +115,7 @@ async def update(body: dict, auth_user: AuthUser, user_mapper: UserMapper):
 async def update_password(body: dict, auth_mapper: AuthMapper):
     req_data = body['data']
     user_id = req_data['id']
+    assert await auth_mapper.writable(user_id=user_id), '修改密码失败'
     password = bcrypt.hashpw(req_data['password'].encode(), bcrypt.gensalt()).decode()
     await auth_mapper.update_password(user_id=user_id, password=password)
     return {'id': user_id}
@@ -152,14 +153,14 @@ async def create_user(
     assert f'TA{team_id}' in auth_user.acl, '当前用户不是团队管理员，无操作权限'
     # 创建用户
     user_id = make_unique_id()
-    assert await user_mapper.insert_user(
+    await user_mapper.insert_user(
         id=user_id,
         truename=req_data['truename'],
         email=req_data['email'],
         team_id=team_id,
         read_acl=['U'],
         write_acl=[f'U{user_id}'],
-    ) > 0, '创建用户失败，或无权限'
+    )
     await auth_mapper.insert_auth(
         user_id=user_id,
         password=req_data['password'],
@@ -173,6 +174,5 @@ async def create_user(
         write_acl=['U'],
     )
     # 添加团队关系
-    assert await team_mapper.add_team_member(
-        id=make_unique_id(), team_id=team_id, user_id=user_id) > 0, '添加团队成员失败'
+    await team_mapper.add_team_member(id=make_unique_id(), team_id=team_id, user_id=user_id)
     return {'id': user_id}

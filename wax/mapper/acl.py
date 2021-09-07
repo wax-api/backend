@@ -17,18 +17,16 @@ class ACLMapper(Mapper):
     async def select_by_user_id(self, *, user_id: int):
         pass
 
-    @update('update tbl_acl set acl=(acl||:acls), updated_at=NOW() where user_id=:user_id and (WRITE)')
+    @update('update tbl_acl set acl=(acl||:acls), updated_at=NOW() where user_id=:user_id')
     async def add_acls(self, *, user_id: int, acls: list) -> None:
         pass
 
-    @update('''update tbl_acl set acl=array_remove(acl, :removing_acl), updated_at=NOW() 
-    where (acl&&:acls) and (WRITE)''')
+    @update('''update tbl_acl set acl=array_remove(acl, :removing_acl), updated_at=NOW() where (acl&&:acls)''')
     async def remove_acl(self, *, acls: list, removing_acl: str) -> None:
         pass
 
     @insert('''insert into tbl_acl(user_id, acl, read_acl, write_acl)
-    select :user_id, :acl, :read_acl, :write_acl
-    from (select ARRAY['U'] as write_acl) T where (T.WRITE)
+    values(:user_id, :acl, :read_acl, :write_acl)
     ''')
     async def insert_acl(self, *, user_id: int, acl: list, read_acl: list, write_acl: list):
         pass

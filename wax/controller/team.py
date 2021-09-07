@@ -29,15 +29,14 @@ async def insert(
         body: dict):
     req_data = body['data']
     team_id = make_unique_id()
-    assert await team_mapper.insert_team(
+    assert await team_mapper.writable(id=team_id), '无创建团队权限'
+    await team_mapper.insert_team(
         id=team_id, name=req_data['name'],
         read_acl=[f'T{team_id}'],
         write_acl=[f'TA{team_id}'],
-    ) > 0, '创建团队失败，或无权限操作'
+    )
     team_acl = [f'T{team_id}', f'TA{team_id}']
-    auth_user.acl.extend(team_acl)
-    assert await team_mapper.add_team_member(
-        id=make_unique_id(), team_id=team_id, user_id=auth_user.user_id) > 0, '添加团队成员失败'
+    await team_mapper.add_team_member(id=make_unique_id(), team_id=team_id, user_id=auth_user.user_id)
     await aclmapper.add_acls(user_id=auth_user.user_id, acls=team_acl)
     return {'id': team_id}
 
@@ -62,7 +61,9 @@ async def insert(
 })
 async def update(team_mapper: TeamMapper, body: dict):
     req_data = body['data']
-    await team_mapper.update_by_id(id=req_data['id'], name=req_data['name'])
+    team_id = req_data['id']
+    assert await team_mapper.writable(id=team_id), '无修改团队权限'
+    await team_mapper.update_by_id(id=team_id, name=req_data['name'])
     return {'id': req_data['id']}
 
 
@@ -88,10 +89,11 @@ async def delete(
         aclmapper: ACLMapper,
         path: dict):
     team_id = path['id']
-    await team_mapper.remove_team_member(team_id=team_id)  # 必须先删关系，再删团队，不然acl有问题
+    assert await team_mapper.writable(id=team_id), '无删除团队权限'
+    await team_mapper.remove_team_member(team_id=team_id)
     await team_mapper.delete_by_id(id=team_id)
-    await aclmapper.remove_acl(acls=[f'T{team_id}', f'TA{team_id}'], removing_acl=f'T{team_id}')
-    await aclmapper.remove_acl(acls=[f'T{team_id}', f'TA{team_id}'], removing_acl=f'TA{team_id}')
+    await aclmapper.remove_acl(acls=[f'T{team_id}'], removing_acl=f'T{team_id}')
+    await aclmapper.remove_acl(acls=[f'TA{team_id}'], removing_acl=f'TA{team_id}')
     return {'id': team_id}
 
 
@@ -120,6 +122,7 @@ async def remove_member(
         query: dict):
     team_id = path['id']
     user_id = query['user_id']
+    assert await team_mapper.writable(id=team_id), '无删除团队成员权限'
     await team_mapper.remove_team_member(team_id=team_id, user_id=user_id)
     await aclmapper.remove_acl(acls=[f'U{user_id}'], removing_acl=f'T{team_id}')
     await aclmapper.remove_acl(acls=[f'U{user_id}'], removing_acl=f'TA{team_id}')

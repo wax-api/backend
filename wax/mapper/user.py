@@ -3,6 +3,11 @@ from wax.sql_util import select_one, update, insert
 
 
 class UserMapper(Mapper):
+
+    @select_one('''select id from tbl_user U where U.id=:id and (U.WRITE) limit 1''')
+    async def writable(self, *, id: int) -> dict:
+        pass
+
     @select_one('''select id,avatar,truename,email,team_id,created_at,updated_at 
     from tbl_user U where U.id=:id and (U.READ) limit 1
     ''')
@@ -23,14 +28,13 @@ class UserMapper(Mapper):
     % if email:
         email=:email,
     % endif
-    updated_at=NOW() where id=:id and (WRITE)
+    updated_at=NOW() where id=:id
     ''')
     async def update_by_id(self, *, id: int, avatar: str=None, truename: str=None, email: str=None) -> None:
         pass
 
     @insert('''insert into tbl_user(id, truename, email, team_id, read_acl, write_acl)
-    select :id, :truename, :email, :team_id, :read_acl, :write_acl
-    from (select ARRAY['U'] as write_acl) T where (T.WRITE)
+    values(:id, :truename, :email, :team_id, :read_acl, :write_acl)
     ''')
     async def insert_user(self, *, id: int, truename: str, email: str, team_id: int, read_acl: list, write_acl: list) -> int:
         pass

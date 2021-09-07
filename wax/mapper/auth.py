@@ -3,12 +3,16 @@ from wax.sql_util import update, insert, select_one
 
 
 class AuthMapper(Mapper):
+    @select_one('''select user_id from tbl_auth where user_id=:user_id and (WRITE)''')
+    async def writable(self, *, user_id: int):
+        pass
+
     @select_one('''select user_id, password from tbl_auth where user_id=:user_id and (READ)''')
     async def select_by_user_id(self, *, user_id: int):
         pass
 
     @update('''update tbl_auth set password=:password, updated_at=NOW() 
-    where user_id=:user_id and (WRITE)
+    where user_id=:user_id
     ''')
     async def update_password(self, *, user_id: int, password: str):
         pass

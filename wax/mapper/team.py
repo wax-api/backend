@@ -3,13 +3,16 @@ from wax.sql_util import select_one, select_range, update, insert, delete
 
 
 class TeamMapper(Mapper):
+    @select_one('select id from tbl_team T where T.id=:id and (T.WRITE) limit 1')
+    async def writable(self, *, id: int) -> dict:
+        pass
+
     @select_one('select * from tbl_team T where T.id=:id and (T.READ) limit 1')
     async def select_by_id(self, *, id: int) -> dict:
         pass
 
     @insert('''insert into tbl_team(id, name, read_acl, write_acl)
-    select :id, :name, :read_acl, :write_acl 
-    from (select ARRAY['U'] as write_acl) T where (T.WRITE)
+    values(:id, :name, :read_acl, :write_acl) 
     ''')
     async def insert_team(self, *, id: int, name: str, read_acl: list, write_acl: list) -> int:
         pass
@@ -18,29 +21,26 @@ class TeamMapper(Mapper):
     % if name:
         name=:name,
     % endif
-    updated_at=NOW() where id=:id and (WRITE)
+    updated_at=NOW() where id=:id
     ''')
     async def update_by_id(self, *, id: int, name: str=None) -> None:
         pass
 
-    @delete('''delete from tbl_team where id=:id and (WRITE)''')
+    @delete('''delete from tbl_team where id=:id''')
     async def delete_by_id(self, *, id: int) -> None:
         pass
 
     @insert('''insert into tbl_team_user(id, team_id, user_id)
-    select :id, T.id, :user_id from tbl_team T
-    where T.id=:team_id and (T.WRITE) limit 1
+    values(:id, :team_id, :user_id)
     ''')
     async def add_team_member(self, *, id: int, team_id: int, user_id: int) -> int:
         pass
 
     @delete('''delete from tbl_team_user TU
-     using tbl_team T
-     where T.id=TU.team_id and T.id=:team_id
+     where TU.team_id=:team_id
      % if user_id:
         and TU.user_id=:user_id
      % endif 
-     and (T.WRITE) 
     ''')
     async def remove_team_member(self, *, team_id: int, user_id: int) -> None:
         pass
