@@ -35,7 +35,7 @@ async def security_middleware(request: Request, handler):
         auth_user = AuthUser(user_id=user_id, role=payload['sub'], acl=['U', f'U{user_id}'])
         set_request_ctx(request, type_=AuthUser, name='auth_user', instance=auth_user)
     except:
-        auth_user = AuthUser(user_id=0, role='GUEST', acl=[])
+        auth_user = AuthUser(user_id=0, role='GUEST', acl=['G'])
         set_request_ctx(request, type_=AuthUser, name='auth_user', instance=auth_user)
     if auth_user.user_id:
         aclmapper = get_request_ctx(request, ACLMapper, 'aclmapper')

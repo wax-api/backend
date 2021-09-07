@@ -28,7 +28,7 @@ class TeamMapper(Mapper):
         pass
 
     @insert('''insert into tbl_team_user(id, team_id, user_id)
-    select :id, T.id, :user_id AS uid from tbl_team T
+    select :id, T.id, :user_id from tbl_team T
     where T.id=:team_id and (T.WRITE) limit 1
     ''')
     async def add_team_member(self, *, id: int, team_id: int, user_id: int) -> int:

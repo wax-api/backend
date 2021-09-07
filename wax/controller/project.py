@@ -1,4 +1,8 @@
 from wax.wax_dsl import endpoint
+from wax.component.security import AuthUser
+from wax.mapper.acl import ACLMapper
+from wax.mapper.project import ProjectMapper
+from wax.utils import make_unique_id
 
 
 @endpoint({
@@ -7,9 +11,10 @@ from wax.wax_dsl import endpoint
     'description': '创建项目',
     'requestBody': {
         'schema': {
-            'name': ['string', '项目名称'],
+            'team_id!': ['integer', '所属团队ID'],
+            'name!': ['string', '项目名称'],
             'remark': ['string', '项目描述'],
-            'visibility': ['string', '可见度', {'enum': ['public', 'private']}]
+            'visibility!': ['string', '可见度', {'enum': ['public', 'private']}]
         }
     },
     'response': {
@@ -20,8 +25,55 @@ from wax.wax_dsl import endpoint
         }
     }
 })
-async def create():  # todo 创建项目
-    pass
+async def create(
+        project_mapper: ProjectMapper,
+        aclmapper: ACLMapper,
+        auth_user: AuthUser,
+        body: dict):
+    req_data = body['data']
+    team_id = req_data['team_id']
+    assert f'T{team_id}' in auth_user.acl, '无团队操作权限'
+    project_id = make_unique_id()
+    if req_data['visibility'] == 'public':
+        project_read_acl = ['G', 'U']
+    else:
+        project_read_acl = [f'TA{team_id}', f'P{project_id}']
+    assert await project_mapper.insert_project(
+        id=project_id, team_id=team_id, name=req_data['name'], remark=req_data['remark'],
+        read_acl=project_read_acl,
+        write_acl=[f'TA{team_id}', f'PA{project_id}']
+    ) > 0, '创建项目失败'
+    project_acl = [f'P{project_id}', f'PA{project_id}']
+    auth_user.acl.extend(project_acl)
+    # 添加项目成员
+    assert await project_mapper.add_project_member(
+        id=make_unique_id(), project_id=project_id, user_id=auth_user.user_id) > 0, '添加项目成员失败'
+    await aclmapper.add_acls(user_id=auth_user.user_id, acls=project_acl)
+    return {'id': project_id}
+
+
+@endpoint({
+    'method': 'DELETE',
+    'path': '/app/project/{id}',
+    'description': '移除项目',
+    'requestParam': {
+        'path': {
+            'id!': 'integer',
+        }
+    },
+    'response': {
+        '200': {
+            'schema': {
+                'id': ['integer', '项目ID']
+            }
+        }
+    }
+})
+async def delete(project_mapper: ProjectMapper, path: dict):
+    project_id = path['id']
+    assert await project_mapper.delete_by_id(id=project_id) > 0, '删除项目失败'
+    await project_mapper.remove_project_member(project_id=project_id)
+    return {'id': project_id}
 
 
 @endpoint({
@@ -30,6 +82,7 @@ async def create():  # todo 创建项目
     'description': '查询项目列表',
     'requestParam': {
         'query': {
+            'team_id!': 'integer',
             'offset': 'integer',
             'limit': 'integer',
         }
@@ -39,7 +92,6 @@ async def create():  # todo 创建项目
             'schema': {
                 'total': 'integer',
                 'offset': 'integer',
-                'limit': 'integer',
                 'list[]': {
                     'id': ['integer', '项目ID'],
                     'name': ['string', '项目名称'],
@@ -50,8 +102,9 @@ async def create():  # todo 创建项目
         }
     }
 })
-async def query_list():  # todo 查询项目列表
-    pass
+async def query_list(project_mapper: ProjectMapper, query: dict, limit: int, offset: int):
+    team_id = query['team_id']
+    return await project_mapper.query_list(limit=limit, offset=offset, team_id=team_id)
 
 
 @endpoint({
@@ -59,8 +112,10 @@ async def query_list():  # todo 查询项目列表
     'path': '/app/project/{id}/member',
     'description': '查询团队成员列表',
     'requestParam': {
-        'query': {
+        'path': {
             'id!': ['integer', '团队ID'],
+        },
+        'query': {
             'offset': 'integer',
             'limit': 'integer',
         }
@@ -69,7 +124,6 @@ async def query_list():  # todo 查询项目列表
         '200': {
                 'total': 'integer',
                 'offset': 'integer',
-                'limit': 'integer',
                 'list[]': {
                     'id': ['integer', '用户ID'],
                     'avatar?': 'string',
@@ -83,8 +137,13 @@ async def query_list():  # todo 查询项目列表
             }
     }
 })
-async def list_member():  # todo 查询团队成员列表
-    pass
+async def list_member(
+        project_mapper: ProjectMapper,
+        path: dict,
+        limit: int,
+        offset: int):
+    project_id = path['id']
+    return await project_mapper.query_member_list(limit=limit, offset=offset, project_id=project_id)
 
 
 @endpoint({
@@ -110,5 +169,52 @@ async def list_member():  # todo 查询团队成员列表
         }
     }
 })
-async def save_member():  # todo 添加或编辑项目成员
-    pass
+async def save_member(project_mapper: ProjectMapper, aclmapper: ACLMapper, path: dict, body: dict):
+    req_data = body['body']
+    project_id = path['id']
+    user_id = req_data['user_id']
+    role = req_data['role']
+    role_db = await project_mapper.select_project_role(project_id=project_id, user_id=user_id)
+    if role_db:
+        await project_mapper.update_project_member(project_id=project_id, user_id=user_id, role=role)
+        if role_db['role'] == 'admin':
+            await aclmapper.remove_acl([f'U{user_id}'], removing_acl=f'PA{project_id}')
+        else:
+            await aclmapper.remove_acl([f'U{user_id}'], removing_acl=f'P{project_id}')
+    else:
+        await project_mapper.add_project_member(id=make_unique_id(), project_id=project_id, user_id=user_id, role=role)
+    if role == 'admin':
+        await aclmapper.add_acls(user_id=user_id, acls=[f'PA{project_id}', f'P{project_id}'])
+    else:
+        await aclmapper.add_acls(user_id=user_id, acls=[f'P{project_id}'])
+    return {'id': project_id}
+
+
+@endpoint({
+    'method': 'DELETE',
+    'path': '/app/project/{id}/member',
+    'description': '移除项目成员',
+    'requestParam': {
+        'path': {
+            'id!': 'integer',
+        },
+        'query': {
+            'user_id!': ['integer', '用户ID'],
+        }
+    },
+    'response': {
+        '200': {
+            'schema': {
+                'id': ['integer', '项目ID']
+            }
+        }
+    }
+})
+async def remove_member(project_mapper: ProjectMapper, aclmapper: ACLMapper, path: dict, query: dict):
+    project_id = path['id']
+    user_id = query['user_id']
+    assert await project_mapper.remove_project_member(project_id=project_id, user_id=user_id) > 0, '删除项目成员失败'
+    await aclmapper.remove_acl([f'U{user_id}'], removing_acl=f'PA{project_id}')
+    await aclmapper.remove_acl([f'U{user_id}'], removing_acl=f'P{project_id}')
+    return {'id': project_id}
+

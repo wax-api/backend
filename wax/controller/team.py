@@ -146,7 +146,6 @@ async def remove_member(
             'schema': {
                 'total': 'integer',
                 'offset': 'integer',
-                'limit': 'integer',
                 'list[]': {
                     'id': ['integer', '用户ID'],
                     'avatar?': 'string',

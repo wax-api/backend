@@ -5,6 +5,7 @@ from wax.sql_util import update, select_one, insert
 class ACLMapper(Mapper):
     """
     ACL的定义：
+        G => 游客
         U => 任何用户
         U{user_id} => 指定的用户
         TA{team_id} => 团队管理员

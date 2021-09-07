@@ -5,5 +5,6 @@ CREATE TABLE tbl_team_user (
   role varchar(20) NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  UNIQUE (team_id, user_id)
 )
