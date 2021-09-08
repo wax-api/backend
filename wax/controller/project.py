@@ -58,7 +58,7 @@ async def create(
             'id!': ['integer', '项目ID'],
             'name': ['string', '项目名称'],
             'remark': ['string', '项目描述'],
-            'visibility!': ['string', '可见度', {'enum': ['public', 'private']}]
+            'visibility': ['string', '可见度', {'enum': ['public', 'private']}]
         }
     },
     'response': {
@@ -72,8 +72,15 @@ async def create(
 async def update(project_mapper: ProjectMapper, body: dict):
     req_data = body['data']
     project_id = req_data['id']
-    assert await project_mapper.writable(id=project_id), '无修改项目权限'
-    await project_mapper.update_by_id(**req_data)
+    assert (project_db := await project_mapper.writable(id=project_id)), '无修改项目权限'
+    team_id = project_db['team_id']
+    visibility = req_data.get('visibility')
+    if visibility and visibility != project_db['visibility']:
+        project_read_acl = ['G', 'U'] if req_data['visibility'] == 'public' else [f'TA{team_id}', f'P{project_id}']
+        await project_mapper.update_by_id(read_acl=project_read_acl, **req_data)
+        # todo 同步directory, entity, interface, mock的read_acl和write_acl
+    else:
+        await project_mapper.update_by_id(**req_data)
     return {'id': project_id}
 
 
@@ -217,7 +224,6 @@ async def save_member(project_mapper: ProjectMapper, aclmapper: ACLMapper, path:
         await aclmapper.add_acls(user_id=user_id, acls=[f'PA{project_id}', f'P{project_id}'])
     else:
         await aclmapper.add_acls(user_id=user_id, acls=[f'P{project_id}'])
-    # todo 同步directory, entity, interface, mock的read_acl和write_acl
     return {'id': project_id}
 
 

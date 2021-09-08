@@ -3,7 +3,7 @@ from wax.sql_util import select_one, select_range, update, insert, delete
 
 
 class ProjectMapper(Mapper):
-    @select_one('select id from tbl_project P where P.id=:id and (P.WRITE) limit 1')
+    @select_one('select id, team_id, visibility from tbl_project P where P.id=:id and (P.WRITE) limit 1')
     async def writable(self, *, id: int) -> dict:
         pass
 
@@ -27,9 +27,12 @@ class ProjectMapper(Mapper):
     % if visibility:
         visibility=:visibility,
     % endif
+    % if read_acl:
+        read_acl=:read_acl,
+    % endif
     updated_at=NOW() where id=:id
     ''')
-    async def update_by_id(self, *, id: int, name: str=None, remark: str=None, visibility: str=None) -> None:
+    async def update_by_id(self, *, id: int, name: str=None, remark: str=None, visibility: str=None, read_acl: list=None) -> None:
         pass
 
     @delete('''delete from tbl_project where id=:id''')

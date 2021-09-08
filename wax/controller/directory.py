@@ -60,6 +60,7 @@ async def insert(directory_mapper: DirectoryMapper, auth_user: AuthUser, body: d
         name=req_data['name'],
         parent=req_data['parent'],
         position=req_data['position'],
+        write_acl=[f'P{project_id}']
     )
     return {'id': directory_id}
 
