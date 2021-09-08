@@ -1,6 +1,6 @@
 from wax.wax_dsl import endpoint
-from wax.mapper.directory import DirectoryMapper
 from wax.component.security import AuthUser
+from wax.mapper.directory import DirectoryMapper
 from wax.utils import make_unique_id
 
 
@@ -25,8 +25,9 @@ from wax.utils import make_unique_id
         }
     }
 })
-async def query_list():  # todo 查询分类列表
-    pass
+async def query_list(directory_mapper: DirectoryMapper, query: dict):
+    directory_list = await directory_mapper.select_list(project_id=query['project_id'])
+    return {'list': directory_list}
 
 
 @endpoint({
@@ -82,8 +83,12 @@ async def insert(directory_mapper: DirectoryMapper, auth_user: AuthUser, body: d
         }
     }
 })
-async def delete():  # todo 删除接口分类
-    pass
+async def delete(directory_mapper: DirectoryMapper, path: dict):
+    directory_id = path['id']
+    assert await directory_mapper.writable(id=directory_id), '无删除接口分类权限'
+    await directory_mapper.delete_by_id(id=directory_id)
+    # todo 删除目录下所有接口
+    return {'id': directory_id}
 
 
 @endpoint({
@@ -95,6 +100,7 @@ async def delete():  # todo 删除接口分类
             'id!': 'integer',
             'name!': 'string',
             'parent': 'integer',
+            'position': 'integer',
         }
     },
     'response': {
@@ -105,5 +111,9 @@ async def delete():  # todo 删除接口分类
         }
     }
 })
-async def update():  # todo 修改接口分类
-    pass
+async def update(directory_mapper: DirectoryMapper, body: dict):
+    req_data = body['data']
+    directory_id = req_data['id']
+    assert await directory_mapper.writable(id=directory_id), '无修改接口分类权限'
+    await directory_mapper.update_by_id(**req_data)
+    return {'id': directory_id}
