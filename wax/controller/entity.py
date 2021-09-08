@@ -1,4 +1,7 @@
 from wax.wax_dsl import endpoint
+from wax.component.security import AuthUser
+from wax.mapper.entity import EntityMapper
+from wax.utils import make_unique_id
 
 
 @endpoint({
@@ -7,7 +10,8 @@ from wax.wax_dsl import endpoint
     'description': '查询实体列表',
     'requestParam': {
         'query': {
-            'interface_id!': 'integer',
+            'project_id!': 'integer',
+            'superset_id': 'integer',
         }
     },
     'response': {
@@ -16,14 +20,15 @@ from wax.wax_dsl import endpoint
                 'list[]': {
                     'id': 'integer',
                     'name': 'string',
-                    'interface_id': 'integer',
+                    'superset_id': 'integer'
                 }
             }
         }
     }
 })
-async def query_list():  # todo 查询实体列表
-    pass
+async def query_list(entity_mapper: EntityMapper, query: dict):
+    entity_list = await entity_mapper.select_list(**query)
+    return {'list': entity_list}
 
 
 @endpoint({
@@ -39,27 +44,27 @@ async def query_list():  # todo 查询实体列表
         '200': {
             'schema': {
                 'id': 'integer',
+                'project_id': 'integer',
                 'name': 'string',
-                'interface_id': 'integer',
                 'superset_id': ['integer', '超集实体ID'],
                 'content': 'string',
             }
         }
     }
 })
-async def query_detail():  # todo 查询实体详情
-    pass
+async def query_detail(entity_mapper: EntityMapper, path: dict):
+    return await entity_mapper.select_by_id(id=path['id'])
 
 
 @endpoint({
     'method': 'POST',
     'path': '/app/entity',
-    'description': '修改mock',
+    'description': '创建实体',
     'requestBody': {
         'schema': {
             'name!': 'string',
-            'interface_id!': 'integer',
-            'superset_id': ['integer', '超集实体ID'],
+            'project_id!': 'integer',
+            'superset_id!': ['integer', '超集实体ID'],
         }
     },
     'response': {
@@ -70,8 +75,20 @@ async def query_detail():  # todo 查询实体详情
         }
     }
 })
-async def insert():  # todo 创建实体
-    pass
+async def insert(entity_mapper: EntityMapper, auth_user: AuthUser, body: dict):
+    req_data = body['data']
+    project_id = req_data['project_id']
+    assert f'P{project_id}' in auth_user.acl, '无创建实体权限'
+    entity_id = make_unique_id()
+    await entity_mapper.insert_entity(
+        id=entity_id,
+        project_id=req_data['project_id'],
+        superset_id=req_data['superset_id'],
+        name=req_data['name'],
+        content=req_data['content'],
+        write_acl=[f'P{project_id}']
+    )
+    return {'id': entity_id}
 
 
 @endpoint({
@@ -82,8 +99,6 @@ async def insert():  # todo 创建实体
         'schema': {
             'id!': 'integer',
             'name': 'string',
-            'interface_id': 'integer',
-            'superset_id': ['integer', '超集实体ID'],
             'content': 'string',
         }
     },
@@ -95,8 +110,12 @@ async def insert():  # todo 创建实体
         }
     }
 })
-async def update():  # todo 修改实体
-    pass
+async def update(entity_mapper: EntityMapper, body: dict):
+    req_data = body['data']
+    entity_id = req_data['id']
+    assert await entity_mapper.writable(id=entity_id), '无修改实体权限'
+    await entity_mapper.update_by_id(**req_data)
+    return {'id': entity_id}
 
 
 @endpoint({
@@ -116,5 +135,8 @@ async def update():  # todo 修改实体
         }
     }
 })
-async def delete():  # todo 删除实体
-    pass
+async def delete(entity_mapper: EntityMapper, path: dict):
+    entity_id = path['id']
+    assert await entity_mapper.writable(id=entity_id), '无删除实体权限'
+    await entity_mapper.delete_by_id(id=entity_id)
+    return {'id': entity_id}
