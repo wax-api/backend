@@ -3,7 +3,7 @@ from wax.sql_util import update, insert, select_one, select_all, delete
 
 
 class DirectoryMapper(Mapper):
-    @select_one('''select id from tbl_directory where id=:id and (WRITE)''')
+    @select_one('''select id, project_id from tbl_directory where id=:id and (WRITE)''')
     async def writable(self, *, id: int):
         pass
 
