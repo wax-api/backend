@@ -33,8 +33,8 @@ class DirectoryMapper(Mapper):
         pass
 
     @insert('''insert tbl_directory(id, project_id, name, parent, position, read_acl, write_acl)
-    select T.id, :project_id, :name, :parent, :position, T.read_acl, :write_acl
-    from (select id, read_acl from tbl_project where id=:id) T''')
+    select :id, :project_id, :name, :parent, :position, T.read_acl, :write_acl
+    from (select read_acl from tbl_project where id=:project_id) T''')
     async def insert_directory(self, *, id: int, project_id: int, name: str, parent: int, position: int, write_acl: list):
         pass
 

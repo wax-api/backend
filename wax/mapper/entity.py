@@ -18,7 +18,7 @@ class EntityMapper(Mapper):
     % if superset_id:
         and superset_id=:superset_id,
     % endif 
-    and (READ) order by created_by desc
+    and (READ) order by id desc
     ''')
     async def select_list(self, *, project_id: int, superset_id: int=None):
         pass
@@ -36,8 +36,8 @@ class EntityMapper(Mapper):
         pass
 
     @insert('''insert tbl_entity(id, project_id, superset_id, name, content, read_acl, write_acl)
-    select T.id, :project_id, :superset_id, :name, :content, T.read_acl, :write_acl
-    from (select id, read_acl from tbl_project where id=:id) T''')
+    select :id, :project_id, :superset_id, :name, :content, T.read_acl, :write_acl
+    from (select id, read_acl from tbl_project where id=:project_id) T''')
     async def insert_entity(self, *, id: int, project_id: int, superset_id: int, name: str, content: str, write_acl: list):
         pass
 
