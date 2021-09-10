@@ -13,7 +13,7 @@ from wax.wax_dsl import endpoint, Keys
 @endpoint({
     'method': 'POST',
     'path': '/login',
-    'description': '用户登录',
+    'summary': '用户登录',
     'requestBody': {
         'schema': {
             'email!': 'string',
@@ -42,7 +42,7 @@ async def login(user_mapper: UserMapper, auth_mapper: AuthMapper, jwtutil: JWTUt
 @endpoint({
     'method': 'GET',
     'path': '/app/me',
-    'description': '查询当前登录用户信息',
+    'summary': '查询当前登录用户信息',
     'response': {
         '200': {
             'schema': {
@@ -68,7 +68,7 @@ async def me_info(user_mapper: UserMapper, auth_user: AuthUser):
 @endpoint({
     'method': 'PUT',
     'path': '/app/user',
-    'description': '编辑用户信息',
+    'summary': '编辑用户信息',
     'requestBody': {
         'schema': {
             'id!': ['integer', '用户ID'],
@@ -95,7 +95,7 @@ async def update(body: dict, user_mapper: UserMapper):
 @endpoint({
     'method': 'PUT',
     'path': '/app/user/{id}/password',
-    'description': '修改密码',
+    'summary': '修改密码',
     'requestParam': {
         'path': {
             'id!': 'integer',
@@ -108,7 +108,9 @@ async def update(body: dict, user_mapper: UserMapper):
     },
     'response': {
         '200': {
-            'id': ['integer', '用户ID']
+            'schema': {
+                'id': ['integer', '用户ID']
+            },
         }
     }
 })
@@ -124,7 +126,7 @@ async def update_password(body: dict, auth_mapper: AuthMapper):
 @endpoint({
     'method': 'POST',
     'path': '/app/user',
-    'description': '创建用户',
+    'summary': '创建用户',
     'requestBody': {
         'schema': {
             'truename!': 'string',
@@ -134,7 +136,9 @@ async def update_password(body: dict, auth_mapper: AuthMapper):
     },
     'response': {
         '200': {
-            'id': ['integer', '用户ID']
+            'schema': {
+                'id': ['integer', '用户ID']
+            },
         }
     }
 })

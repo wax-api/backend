@@ -7,7 +7,7 @@ from wax.utils import make_unique_id
 @endpoint({
     'method': 'GET',
     'path': '/app/entity',
-    'description': '查询实体列表',
+    'summary': '查询实体列表',
     'requestParam': {
         'query': {
             'project_id!': 'integer',
@@ -34,7 +34,7 @@ async def query_list(entity_mapper: EntityMapper, query: dict):
 @endpoint({
     'method': 'GET',
     'path': '/app/entity/{id}',
-    'description': '查询实体详情',
+    'summary': '查询实体详情',
     'requestParam': {
         'path': {
             'id!': 'integer',
@@ -59,7 +59,7 @@ async def query_detail(entity_mapper: EntityMapper, path: dict):
 @endpoint({
     'method': 'POST',
     'path': '/app/entity',
-    'description': '创建实体',
+    'summary': '创建实体',
     'requestBody': {
         'schema': {
             'name!': 'string',
@@ -94,7 +94,7 @@ async def insert(entity_mapper: EntityMapper, auth_user: AuthUser, body: dict):
 @endpoint({
     'method': 'PUT',
     'path': '/app/entity',
-    'description': '修改实体',
+    'summary': '修改实体',
     'requestBody': {
         'schema': {
             'id!': 'integer',
@@ -121,7 +121,7 @@ async def update(entity_mapper: EntityMapper, body: dict):
 @endpoint({
     'method': 'DELETE',
     'path': '/app/entity/{id}',
-    'description': '删除实体',
+    'summary': '删除实体',
     'requestParam': {
         'path': {
             'id!': 'integer',

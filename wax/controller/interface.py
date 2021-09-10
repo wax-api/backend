@@ -8,7 +8,7 @@ from wax.utils import make_unique_id
 @endpoint({
     'method': 'GET',
     'path': '/app/interface',
-    'description': '查询接口列表',
+    'summary': '查询接口列表',
     'requestParam': {
         'query': {
             'project_id!': 'integer',
@@ -37,7 +37,7 @@ async def query_list(interface_mapper: InterfaceMapper, query: dict):
 @endpoint({
     'method': 'GET',
     'path': '/app/interface/{id}',
-    'description': '查询接口详情',
+    'summary': '查询接口详情',
     'requestParam': {
         'path': {
             'id!': 'integer',
@@ -68,7 +68,7 @@ async def query_detail(interface_mapper: InterfaceMapper, path: dict):
 @endpoint({
     'method': 'POST',
     'path': '/app/interface',
-    'description': '创建接口',
+    'summary': '创建接口',
     'requestBody': {
         'schema': {
             'project_id!': 'integer',
@@ -113,7 +113,7 @@ async def insert(
 @endpoint({
     'method': 'DELETE',
     'path': '/app/interface/{id}',
-    'description': '删除接口',
+    'summary': '删除接口',
     'requestParam': {
         'path': {
             'id!': 'integer',
@@ -136,7 +136,7 @@ async def delete(interface_mapper: InterfaceMapper, path: dict):
 @endpoint({
     'method': 'PUT',
     'path': '/app/interface',
-    'description': '修改接口分类',
+    'summary': '修改接口分类',
     'requestBody': {
         'schema': {
             'id!': 'integer',

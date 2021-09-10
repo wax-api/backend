@@ -8,7 +8,7 @@ from wax.utils import make_unique_id
 @endpoint({
     'method': 'POST',
     'path': '/app/project',
-    'description': '创建项目',
+    'summary': '创建项目',
     'requestBody': {
         'schema': {
             'team_id!': ['integer', '所属团队ID'],
@@ -52,7 +52,7 @@ async def create(
 @endpoint({
     'method': 'PUT',
     'path': '/app/project',
-    'description': '修改项目',
+    'summary': '修改项目',
     'requestBody': {
         'schema': {
             'id!': ['integer', '项目ID'],
@@ -87,7 +87,7 @@ async def update(project_mapper: ProjectMapper, body: dict):
 @endpoint({
     'method': 'DELETE',
     'path': '/app/project/{id}',
-    'description': '删除项目',
+    'summary': '删除项目',
     'requestParam': {
         'path': {
             'id!': 'integer',
@@ -117,7 +117,7 @@ async def delete(
 @endpoint({
     'method': 'GET',
     'path': '/app/project',
-    'description': '查询项目列表',
+    'summary': '查询项目列表',
     'requestParam': {
         'query': {
             'team_id!': 'integer',
@@ -148,7 +148,7 @@ async def query_list(project_mapper: ProjectMapper, query: dict, limit: int, off
 @endpoint({
     'method': 'GET',
     'path': '/app/project/{id}/member',
-    'description': '查询团队成员列表',
+    'summary': '查询项目成员列表',
     'requestParam': {
         'path': {
             'id!': ['integer', '团队ID'],
@@ -160,6 +160,7 @@ async def query_list(project_mapper: ProjectMapper, query: dict, limit: int, off
     },
     'response': {
         '200': {
+            'schema': {
                 'total': 'integer',
                 'offset': 'integer',
                 'list[]': {
@@ -173,6 +174,7 @@ async def query_list(project_mapper: ProjectMapper, query: dict, limit: int, off
                     'project_role?': ['string', {'enum': ['admin', 'member']}]
                 }
             }
+        }
     }
 })
 async def list_member(
@@ -187,7 +189,7 @@ async def list_member(
 @endpoint({
     'method': 'PUT',
     'path': '/app/project/{id}/member',
-    'description': '添加或编辑项目成员',
+    'summary': '添加或编辑项目成员',
     'requestParam': {
         'path': {
             'id!': 'integer',
@@ -230,7 +232,7 @@ async def save_member(project_mapper: ProjectMapper, aclmapper: ACLMapper, path:
 @endpoint({
     'method': 'DELETE',
     'path': '/app/project/{id}/member',
-    'description': '移除项目成员',
+    'summary': '移除项目成员',
     'requestParam': {
         'path': {
             'id!': 'integer',

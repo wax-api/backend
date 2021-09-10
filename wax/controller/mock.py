@@ -7,7 +7,7 @@ from wax.utils import make_unique_id
 @endpoint({
     'method': 'GET',
     'path': '/app/mock',
-    'description': '查询mock列表',
+    'summary': '查询mock列表',
     'requestParam': {
         'query': {
             'interface_id!': 'integer',
@@ -37,7 +37,7 @@ async def query_list(mock_mapper: MockMapper, query: dict):
 @endpoint({
     'method': 'GET',
     'path': '/app/mock/{id}',
-    'description': '查询mock详情',
+    'summary': '查询mock详情',
     'requestParam': {
         'path': {
             'id!': 'integer',
@@ -67,7 +67,7 @@ async def query_detail(mock_mapper: MockMapper, path: dict):
 @endpoint({
     'method': 'POST',
     'path': '/app/mock',
-    'description': '创建mock',
+    'summary': '创建mock',
     'requestBody': {
         'schema': {
             'name!': 'string',
@@ -103,7 +103,7 @@ async def insert(mock_mapper: MockMapper,  auth_user: AuthUser, body: dict):
 @endpoint({
     'method': 'PUT',
     'path': '/app/mock',
-    'description': '修改mock',
+    'summary': '修改mock',
     'requestBody': {
         'schema': {
             'id!': 'integer',
@@ -135,7 +135,7 @@ async def update(mock_mapper: MockMapper, body: dict):
 @endpoint({
     'method': 'DELETE',
     'path': '/app/mock/{id}',
-    'description': '删除mock',
+    'summary': '删除mock',
     'requestParam': {
         'path': {
             'id!': 'integer',
@@ -159,7 +159,7 @@ async def delete(mock_mapper: MockMapper, path: dict):
 @endpoint({
     'method': 'PUT',
     'path': '/app/mock/{id}/active',
-    'description': '设置生效mock',
+    'summary': '设置生效mock',
     'requestParam': {
         'path': {
             'id!': 'integer',

@@ -3,14 +3,15 @@ import jsonschema
 from aiohttp.web import Request, Response, json_response, HTTPBadRequest, HTTPInternalServerError
 from wax.schema import to_json_schema
 from wax.json_util import json_dumps
-from wax.inject_util import get_request_ctx, set_request_ctx, inspect_func_params
+from wax.inject_util import set_request_ctx, inspect_func_params
+from wax.openapi import GlobalOpenAPI
 
 
 ENDPOINT_JSON_SCHEMA = to_json_schema({
     "method!": "string",
     "path!": "string",
-    "summary": "string",
-    "description!": "string",
+    "summary!": "string",
+    "description": "string",
     "security[]": "string",
     "requestParam": {
         "path": "object",
@@ -49,6 +50,7 @@ def params_cast(params, schemas):
 
 def endpoint(endpoint_dsl):
     jsonschema.validate(instance=endpoint_dsl, schema=ENDPOINT_JSON_SCHEMA)
+    GlobalOpenAPI.add_endpoint(endpoint_dsl)
 
     def wrapper(handler) -> dict:
         async def coro(request: Request):

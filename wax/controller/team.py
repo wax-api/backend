@@ -8,7 +8,7 @@ from wax.utils import make_unique_id, eafp
 @endpoint({
     'method': 'POST',
     'path': '/app/team',
-    'description': '创建团队',
+    'summary': '创建团队',
     'requestBody': {
         'schema': {
             'name!': ['string', '团队名称', {'minLength': 2}],
@@ -44,7 +44,7 @@ async def insert(
 @endpoint({
     'method': 'PUT',
     'path': '/app/team',
-    'description': '修改团队',
+    'summary': '修改团队',
     'requestBody': {
         'schema': {
             'id!': 'integer',
@@ -70,7 +70,7 @@ async def update(team_mapper: TeamMapper, body: dict):
 @endpoint({
     'method': 'DELETE',
     'path': '/app/team/{id}',
-    'description': '删除团队',
+    'summary': '删除团队',
     'requestParam': {
         'path': {
             'id!': ['integer', '团队ID']
@@ -100,7 +100,7 @@ async def delete(
 @endpoint({
     'method': 'DELETE',
     'path': '/app/team/{id}/member',
-    'description': '删除团队成员',
+    'summary': '删除团队成员',
     'requestParam': {
         'path': {
             'id!': 'integer',
@@ -111,7 +111,9 @@ async def delete(
     },
     'response': {
         '200': {
-            'id': ['integer', '用户ID']
+            'schema': {
+                'id': ['integer', '用户ID']
+            }
         }
     }
 })
@@ -132,7 +134,7 @@ async def remove_member(
 @endpoint({
     'method': 'GET',
     'path': '/app/team/{id}/member',
-    'description': '查询团队成员列表',
+    'summary': '查询团队成员列表',
     'requestParam': {
         'path': {
             'id!': 'integer',

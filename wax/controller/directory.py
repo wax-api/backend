@@ -7,7 +7,7 @@ from wax.utils import make_unique_id
 @endpoint({
     'method': 'GET',
     'path': '/app/directory',
-    'description': '查询分类列表',
+    'summary': '查询分类列表',
     'requestParam': {
         'query': {
             'project_id!': 'integer',
@@ -33,7 +33,7 @@ async def query_list(directory_mapper: DirectoryMapper, query: dict):
 @endpoint({
     'method': 'POST',
     'path': '/app/directory',
-    'description': '创建接口分类',
+    'summary': '创建接口分类',
     'requestBody': {
         'schema': {
             'project_id!': 'integer',
@@ -69,7 +69,7 @@ async def insert(directory_mapper: DirectoryMapper, auth_user: AuthUser, body: d
 @endpoint({
     'method': 'DELETE',
     'path': '/app/directory/{id}',
-    'description': '删除接口分类',
+    'summary': '删除接口分类',
     'requestParam': {
         'path': {
             'id!': 'integer',
@@ -94,7 +94,7 @@ async def delete(directory_mapper: DirectoryMapper, path: dict):
 @endpoint({
     'method': 'PUT',
     'path': '/app/directory',
-    'description': '修改接口分类',
+    'summary': '修改接口分类',
     'requestBody': {
         'schema': {
             'id!': 'integer',

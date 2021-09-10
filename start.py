@@ -14,6 +14,7 @@ import wax.controller.team
 import wax.controller.user
 from wax.component.pg import init_pg, close_pg, pg_conn_middleware
 from wax.component.security import security_middleware
+from wax.openapi import show_openapi
 
 
 @lesscli.add_option('confpath', default='config.toml', help='configure file (.toml format) path, default: config.toml')
@@ -61,6 +62,7 @@ def main(confpath):
     app.router.add_route(**wax.controller.directory.insert)
     app.router.add_route(**wax.controller.directory.delete)
     app.router.add_route(**wax.controller.directory.update)
+    app.router.add_get('/public/openapi.json', show_openapi)
     web.run_app(app, port=app['config']['lessweb']['port'])
 
 
