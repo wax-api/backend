@@ -33,9 +33,9 @@ class UserMapper(Mapper):
     async def update_by_id(self, *, id: int, avatar: str=None, truename: str=None, email: str=None) -> None:
         pass
 
-    @insert('''insert into tbl_user(id, truename, email, team_id, read_acl, write_acl)
-    values(:id, :truename, :email, :team_id, :read_acl, :write_acl)
+    @insert('''insert into tbl_user(id, truename, email, team_id)
+    values(:id, :truename, :email, :team_id)
     ''')
-    async def insert_user(self, *, id: int, truename: str, email: str, team_id: int, read_acl: list, write_acl: list) -> int:
+    async def insert_user(self, *, id: int, truename: str, email: str, team_id: int) -> int:
         pass
 

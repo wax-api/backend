@@ -18,6 +18,6 @@ class AuthMapper(Mapper):
         pass
 
     @insert('''insert tbl_auth(user_id, password)
-    values(:user_id, :password, :read_acl, :write_acl)''')
-    async def insert_auth(self, *, user_id: int, password: str, read_acl: list, write_acl: list):
+    values(:user_id, :password)''')
+    async def insert_auth(self, *, user_id: int, password: str):
         pass
