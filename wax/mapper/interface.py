@@ -3,13 +3,13 @@ from wax.sql_util import update, insert, select_one, select_all, delete
 
 
 class InterfaceMapper(Mapper):
-    @select_one('''select id from tbl_interface where id=:id and (WRITE)''')
+    @select_one('''select id from tbl_interface where id=:id''')
     async def writable(self, *, id: int):
         pass
 
     @select_one('''select id, name, method, path, directory_id, status, endpoint, 
     created_at, updated_at, create_user_id, update_user_id 
-    from tbl_interface where id=:id and (READ)''')
+    from tbl_interface where id=:id''')
     async def select_by_id(self, *, id: int):
         pass
 
@@ -18,7 +18,7 @@ class InterfaceMapper(Mapper):
     % if directory_id:
         and directory_id=:directory_id,
     % endif 
-    and (READ) order by id desc
+    order by id desc
     ''')
     async def select_list(self, *, project_id: int, directory_id: int=None):
         pass

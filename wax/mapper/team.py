@@ -3,11 +3,11 @@ from wax.sql_util import select_one, select_range, update, insert, delete
 
 
 class TeamMapper(Mapper):
-    @select_one('select id from tbl_team T where T.id=:id and (T.WRITE) limit 1')
+    @select_one('select id from tbl_team T where T.id=:id limit 1')
     async def writable(self, *, id: int) -> dict:
         pass
 
-    @select_one('select * from tbl_team T where T.id=:id and (T.READ) limit 1')
+    @select_one('select * from tbl_team T where T.id=:id limit 1')
     async def select_by_id(self, *, id: int) -> dict:
         pass
 
@@ -62,10 +62,6 @@ class TeamMapper(Mapper):
     where TU.team_id=:team_id
     % if keyword:
         and (U.truename LIKE :keyword or U.email LIKE :keyword)
-    % endif
-    and (T.READ)
-    % if project_id:
-        and (P.READ)
     % endif
     order by Tu.id desc limit :limit offset :offset
     ''')

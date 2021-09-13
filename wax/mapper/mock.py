@@ -3,14 +3,14 @@ from wax.sql_util import update, insert, select_one, select_all, delete
 
 
 class MockMapper(Mapper):
-    @select_one('''select id, interface_id from tbl_mock where id=:id and (WRITE)''')
+    @select_one('''select id, interface_id from tbl_mock where id=:id''')
     async def writable(self, *, id: int):
         pass
 
     @select_one('''select id, project_id, interface_id, status_code, content_type, 
     mockjs, content, type, headers, active,
     created_at, updated_at, create_user_id, update_user_id 
-    from tbl_mock where id=:id and (READ)''')
+    from tbl_mock where id=:id''')
     async def select_by_id(self, *, id: int):
         pass
 
@@ -19,7 +19,7 @@ class MockMapper(Mapper):
     % if status_code:
         and status_code=:status_code,
     % endif 
-    and (READ) order by id desc
+    order by id desc
     ''')
     async def select_list(self, *, interface_id: int, status_code: str=None):
         pass

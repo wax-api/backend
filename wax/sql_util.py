@@ -24,8 +24,6 @@ class RegexCollect:
         return word[0] + '%s'
 
     def build(self, sql: str, params: dict) -> tuple:
-        sql = sql.replace('READ)', 'read_acl && :acl)')
-        sql = sql.replace('WRITE)', 'write_acl && :acl)')
         pattern = r"[^:]:[\w_]+"
         pg_sql = re.sub(pattern, self.repl, sql)
         pg_params = tuple(params[k] for k in self.words)

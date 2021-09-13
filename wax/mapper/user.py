@@ -4,17 +4,17 @@ from wax.sql_util import select_one, update, insert
 
 class UserMapper(Mapper):
 
-    @select_one('''select id from tbl_user U where U.id=:id and (U.WRITE) limit 1''')
+    @select_one('''select id from tbl_user U where U.id=:id limit 1''')
     async def writable(self, *, id: int) -> dict:
         pass
 
     @select_one('''select id,avatar,truename,email,team_id,created_at,updated_at 
-    from tbl_user U where U.id=:id and (U.READ) limit 1
+    from tbl_user U where U.id=:id limit 1
     ''')
     async def select_by_id(self, *, id: int) -> dict:
         pass
 
-    @select_one('select * from tbl_user U where U.email=:email and (U.READ) limit 1')
+    @select_one('select * from tbl_user U where U.email=:email limit 1')
     async def select_by_email(self, *, email: str) -> dict:
         pass
 

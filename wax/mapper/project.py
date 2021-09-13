@@ -3,11 +3,11 @@ from wax.sql_util import select_one, select_range, update, insert, delete
 
 
 class ProjectMapper(Mapper):
-    @select_one('select id, team_id, visibility from tbl_project P where P.id=:id and (P.WRITE) limit 1')
+    @select_one('select id, team_id, visibility from tbl_project P where P.id=:id limit 1')
     async def writable(self, *, id: int) -> dict:
         pass
 
-    @select_one('select * from tbl_project P where P.id=:id and (P.READ) limit 1')
+    @select_one('select * from tbl_project P where P.id=:id limit 1')
     async def select_by_id(self, *, id: int) -> dict:
         pass
 
@@ -41,7 +41,7 @@ class ProjectMapper(Mapper):
 
     @select_range('''select id, name, remark, visibility
     from tbl_project
-    where team_id=:team_id and (READ)
+    where team_id=:team_id
     order by id desc limit :limit offset :offset 
     ''')
     async def query_list(self, *, limit: int, offset: int, team_id: int) -> dict:
@@ -80,7 +80,7 @@ class ProjectMapper(Mapper):
     from tbl_project_user PU
     left join tbl_user U on U.id=PU.user_id
     left join tbl_project P on P.id=PU.project_id
-    where P.id=:project_id AND (P.READ)
+    where P.id=:project_id
     order by U.id desc limit :limit offset :offset
     ''')
     async def query_member_list(self, *, limit: int, offset: int, project_id: int) -> dict:
