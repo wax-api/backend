@@ -1,6 +1,6 @@
 from wax.component.security import AuthUser
+from wax.component.gateway import Gateway
 from wax.mapper.team import TeamMapper
-from wax.mapper.acl import ACLMapper
 from wax.wax_dsl import endpoint
 from wax.utils import make_unique_id, eafp
 
@@ -23,31 +23,30 @@ from wax.utils import make_unique_id, eafp
     }
 })
 async def insert(
+        gateway: Gateway,
         team_mapper: TeamMapper,
-        aclmapper: ACLMapper,
         auth_user: AuthUser,
         body: dict):
     req_data = body['data']
     team_id = make_unique_id()
-    assert await team_mapper.writable(id=team_id), '无创建团队权限'
     await team_mapper.insert_team(
         id=team_id, name=req_data['name'],
-        read_acl=[f'T{team_id}'],
-        write_acl=[f'TA{team_id}'],
     )
-    team_acl = [f'T{team_id}', f'TA{team_id}']
     await team_mapper.add_team_member(id=make_unique_id(), team_id=team_id, user_id=auth_user.user_id)
-    await aclmapper.add_acls(user_id=auth_user.user_id, acls=team_acl)
     return {'id': team_id}
 
 
 @endpoint({
     'method': 'PUT',
-    'path': '/app/team',
+    'path': '/app/team/{id}',
     'summary': '修改团队',
+    'requestParam': {
+        'path': {
+            'id!': ['integer', '团队ID']
+        }
+    },
     'requestBody': {
         'schema': {
-            'id!': 'integer',
             'name': ['string', '团队名称', {'minLength': 2}],
         }
     },
@@ -59,10 +58,9 @@ async def insert(
         }
     }
 })
-async def update(team_mapper: TeamMapper, body: dict):
+async def update(team_mapper: TeamMapper, body: dict, path: dict):
     req_data = body['data']
-    team_id = req_data['id']
-    assert await team_mapper.writable(id=team_id), '无修改团队权限'
+    team_id = path['id']
     await team_mapper.update_by_id(id=team_id, name=req_data['name'])
     return {'id': req_data['id']}
 
@@ -86,14 +84,10 @@ async def update(team_mapper: TeamMapper, body: dict):
 })
 async def delete(
         team_mapper: TeamMapper,
-        aclmapper: ACLMapper,
         path: dict):
     team_id = path['id']
-    assert await team_mapper.writable(id=team_id), '无删除团队权限'
     await team_mapper.remove_team_member(team_id=team_id)
     await team_mapper.delete_by_id(id=team_id)
-    await aclmapper.remove_acl(acls=[f'T{team_id}'], removing_acl=f'T{team_id}')
-    await aclmapper.remove_acl(acls=[f'TA{team_id}'], removing_acl=f'TA{team_id}')
     return {'id': team_id}
 
 
@@ -119,15 +113,11 @@ async def delete(
 })
 async def remove_member(
         team_mapper: TeamMapper,
-        aclmapper: ACLMapper,
         path: dict,
         query: dict):
     team_id = path['id']
     user_id = query['user_id']
-    assert await team_mapper.writable(id=team_id), '无删除团队成员权限'
     await team_mapper.remove_team_member(team_id=team_id, user_id=user_id)
-    await aclmapper.remove_acl(acls=[f'U{user_id}'], removing_acl=f'T{team_id}')
-    await aclmapper.remove_acl(acls=[f'U{user_id}'], removing_acl=f'TA{team_id}')
     return {'id': user_id}
 
 
@@ -141,7 +131,6 @@ async def remove_member(
         },
         'query': {
             'keyword': 'string',
-            'project_id': 'integer',
             'offset': 'integer',
             'limit': 'integer',
         }
@@ -160,7 +149,6 @@ async def remove_member(
                     'created_at': 'string',
                     'updated_at': 'string',
                     'team_role': ['string', {'enum': ['admin', 'member']}],
-                    'project_role?': ['string', {'enum': ['admin', 'member']}]
                 }
             }
         }
@@ -169,5 +157,4 @@ async def remove_member(
 async def list_member(team_mapper: TeamMapper, path: dict, query: dict, offset: int, limit: int):
     team_id = path['team_id']
     keyword = eafp(lambda: '%' + query['keyword'] + '%')
-    project_id = query.get('project_id')
-    return await team_mapper.select_team_member(offset=offset, limit=limit, team_id=team_id, keyword=keyword, project_id=project_id)
+    return await team_mapper.select_team_member(offset=offset, limit=limit, team_id=team_id, keyword=keyword)

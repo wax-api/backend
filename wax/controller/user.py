@@ -1,3 +1,4 @@
+import asyncio
 from aiohttp.web import HTTPNotFound
 import bcrypt
 from wax.component.jwt import JWTUtil
@@ -174,9 +175,10 @@ async def create_user(
     )
     # 添加团队关系
     await team_mapper.add_team_member(id=make_unique_id(), team_id=team_id, user_id=user_id)
-    # 添加User ACL
-    await gateway.put_user_acl(user_id=user_id, add_acls=[f'U/{user_id}', f'T/{team_id}'])
-    # 添加API ACL
-    await gateway.put_api_acl(method='PUT', path=f'/app/user/{user_id}', add_acls=[f'U/{user_id}'])
-    await gateway.put_api_acl(method='PUT', path=f'/app/user/{user_id}/password', add_acls=[f'U/{user_id}'])
+    # 添加User ACL和API ACL
+    await asyncio.gather(
+        gateway.put_user_acl(user_id=user_id, add_acls=[f'U/{user_id}', f'T/{team_id}']),
+        gateway.put_api_acl(method='PUT', path=f'/app/user/{user_id}', add_acls=[f'U/{user_id}']),
+        gateway.put_api_acl(method='PUT', path=f'/app/user/{user_id}/password', add_acls=[f'U/{user_id}']),
+    )
     return {'id': user_id}
