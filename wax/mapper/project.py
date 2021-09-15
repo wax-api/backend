@@ -11,10 +11,10 @@ class ProjectMapper(Mapper):
     async def select_by_id(self, *, id: int) -> dict:
         pass
 
-    @insert('''insert into tbl_project(id, team_id, name, remark, visibility, read_acl, write_acl)
-    values(:id, :team_id, :name, :remark, :visibility, :read_acl, :write_acl) 
+    @insert('''insert into tbl_project(id, team_id, name, remark, visibility)
+    values(:id, :team_id, :name, :remark, :visibility) 
     ''')
-    async def insert_project(self, *, id: int, team_id: int, name: str, remark: str, visibility: str, read_acl: list, write_acl: list) -> int:
+    async def insert_project(self, *, id: int, team_id: int, name: str, remark: str, visibility: str) -> int:
         pass
 
     @update('''update tbl_project set 
@@ -27,12 +27,9 @@ class ProjectMapper(Mapper):
     % if visibility:
         visibility=:visibility,
     % endif
-    % if read_acl:
-        read_acl=:read_acl,
-    % endif
     updated_at=NOW() where id=:id
     ''')
-    async def update_by_id(self, *, id: int, name: str=None, remark: str=None, visibility: str=None, read_acl: list=None) -> None:
+    async def update_by_id(self, *, id: int, name: str=None, remark: str=None, visibility: str=None) -> None:
         pass
 
     @delete('''delete from tbl_project where id=:id''')
