@@ -1,16 +1,15 @@
 from wax.wax_dsl import endpoint
-from wax.component.security import AuthUser
 from wax.mapper.directory import DirectoryMapper
 from wax.utils import make_unique_id
 
 
 @endpoint({
     'method': 'GET',
-    'path': '/app/directory',
+    'path': '/app/project/{project_id}/directory',
     'summary': '查询分类列表',
     'requestParam': {
-        'query': {
-            'project_id!': 'integer',
+        'path': {
+            'project_id!': ['integer', '项目ID'],
         }
     },
     'response': {
@@ -25,18 +24,22 @@ from wax.utils import make_unique_id
         }
     }
 })
-async def query_list(directory_mapper: DirectoryMapper, query: dict):
-    directory_list = await directory_mapper.select_list(project_id=query['project_id'])
+async def query_list(directory_mapper: DirectoryMapper, path: dict):
+    directory_list = await directory_mapper.select_list(project_id=path['project_id'])
     return {'list': directory_list}
 
 
 @endpoint({
     'method': 'POST',
-    'path': '/app/directory',
+    'path': '/app/project/{project_id}/directory',
     'summary': '创建接口分类',
+    'requestParam': {
+        'path': {
+            'project_id!': ['integer', '项目ID'],
+        }
+    },
     'requestBody': {
         'schema': {
-            'project_id!': 'integer',
             'name!': 'string',
             'parent!': 'integer',
             'position!': 'integer'
@@ -50,10 +53,9 @@ async def query_list(directory_mapper: DirectoryMapper, query: dict):
         }
     }
 })
-async def insert(directory_mapper: DirectoryMapper, auth_user: AuthUser, body: dict):
+async def insert(directory_mapper: DirectoryMapper, path: dict, body: dict):
     req_data = body['data']
-    project_id = req_data['project_id']
-    assert f'P{project_id}' in auth_user.acl, '无创建接口分类权限'
+    project_id = path['project_id']
     directory_id = make_unique_id()
     await directory_mapper.insert_directory(
         id=directory_id,
@@ -61,7 +63,6 @@ async def insert(directory_mapper: DirectoryMapper, auth_user: AuthUser, body: d
         name=req_data['name'],
         parent=req_data['parent'],
         position=req_data['position'],
-        write_acl=[f'P{project_id}']
     )
     return {'id': directory_id}
 
@@ -85,19 +86,22 @@ async def insert(directory_mapper: DirectoryMapper, auth_user: AuthUser, body: d
 })
 async def delete(directory_mapper: DirectoryMapper, path: dict):
     directory_id = path['id']
-    assert await directory_mapper.writable(id=directory_id), '无删除接口分类权限'
     await directory_mapper.delete_by_id(id=directory_id)
-    # todo 删除目录下所有接口
+    # todo 删除目录下所有接口和mock
     return {'id': directory_id}
 
 
 @endpoint({
     'method': 'PUT',
-    'path': '/app/directory',
+    'path': '/app/directory/{id}',
     'summary': '修改接口分类',
+    'requestParam': {
+        'path': {
+            'id!': 'integer',
+        }
+    },
     'requestBody': {
         'schema': {
-            'id!': 'integer',
             'name!': 'string',
             'parent': 'integer',
             'position': 'integer',
@@ -111,9 +115,8 @@ async def delete(directory_mapper: DirectoryMapper, path: dict):
         }
     }
 })
-async def update(directory_mapper: DirectoryMapper, body: dict):
+async def update(directory_mapper: DirectoryMapper, path: dict, body: dict):
     req_data = body['data']
-    directory_id = req_data['id']
-    assert await directory_mapper.writable(id=directory_id), '无修改接口分类权限'
-    await directory_mapper.update_by_id(**req_data)
+    directory_id = path['id']
+    await directory_mapper.update_by_id(id=directory_id, **req_data)
     return {'id': directory_id}

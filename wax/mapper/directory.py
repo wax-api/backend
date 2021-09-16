@@ -32,10 +32,9 @@ class DirectoryMapper(Mapper):
     async def update_by_id(self, *, id: int, name: str, parent: int=None, position: int=None):
         pass
 
-    @insert('''insert tbl_directory(id, project_id, name, parent, position, read_acl, write_acl)
-    select :id, :project_id, :name, :parent, :position, T.read_acl, :write_acl
-    from (select read_acl from tbl_project where id=:project_id) T''')
-    async def insert_directory(self, *, id: int, project_id: int, name: str, parent: int, position: int, write_acl: list):
+    @insert('''insert tbl_directory(id, project_id, name, parent, position)
+    values (:id, :project_id, :name, :parent, :position)''')
+    async def insert_directory(self, *, id: int, project_id: int, name: str, parent: int, position: int):
         pass
 
     @delete('''delete from tbl_directory where id=:id''')
