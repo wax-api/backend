@@ -47,10 +47,10 @@ class InterfaceMapper(Mapper):
     async def update_by_id(self, *, id: int, name: str=None, method: str=None, path: str=None, directory_id: int=None, status: str=None, endpoint: str=None):
         pass
 
-    @insert('''insert tbl_interface(id, project_id, directory_id, name, method, path, read_acl, write_acl)
-    select :id, :project_id, :directory_id, :name, :method, :path, T.read_acl, :write_acl
-    from (select id, read_acl from tbl_project where id=:project_id) T''')
-    async def insert_interface(self, *, id: int, project_id: int, directory_id: int, name: str, method: str, path: str, write_acl: list):
+    @insert('''insert tbl_interface(id, project_id, directory_id, name, method, path)
+    values (:id, :project_id, :directory_id, :name, :method, :path)
+    ''')
+    async def insert_interface(self, *, id: int, project_id: int, directory_id: int, name: str, method: str, path: str):
         pass
 
     @delete('''delete from tbl_interface where id=:id''')

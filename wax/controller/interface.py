@@ -1,17 +1,17 @@
 from wax.wax_dsl import endpoint
-from wax.component.security import AuthUser
 from wax.mapper.interface import InterfaceMapper
-from wax.mapper.directory import DirectoryMapper
 from wax.utils import make_unique_id
 
 
 @endpoint({
     'method': 'GET',
-    'path': '/app/interface',
+    'path': '/app/project/{project_id}/interface',
     'summary': '查询接口列表',
     'requestParam': {
-        'query': {
+        'path': {
             'project_id!': 'integer',
+        },
+        'query': {
             'directory_id': 'integer',
         }
     },
@@ -29,8 +29,8 @@ from wax.utils import make_unique_id
         }
     }
 })
-async def query_list(interface_mapper: InterfaceMapper, query: dict):
-    interface_list = await interface_mapper.select_list(project_id=query['project_id'], directory_id=query.get('directory_id'))
+async def query_list(interface_mapper: InterfaceMapper, path: dict, query: dict):
+    interface_list = await interface_mapper.select_list(project_id=path['project_id'], directory_id=query.get('directory_id'))
     return {'list': interface_list}
 
 
@@ -67,15 +67,19 @@ async def query_detail(interface_mapper: InterfaceMapper, path: dict):
 
 @endpoint({
     'method': 'POST',
-    'path': '/app/interface',
+    'path': '/app/project/{project_id}/interface',
     'summary': '创建接口',
+    'requestParam': {
+        'path': {
+            'project_id!': 'integer',
+        }
+    },
     'requestBody': {
         'schema': {
-            'project_id!': 'integer',
             'directory_id!': 'integer',
-            'name': 'string',
-            'method': 'string',
-            'path': 'string',
+            'name!': 'string',
+            'method!': 'string',
+            'path!': 'string',
         }
     },
     'response': {
@@ -88,34 +92,26 @@ async def query_detail(interface_mapper: InterfaceMapper, path: dict):
 })
 async def insert(
         interface_mapper: InterfaceMapper,
-        directory_mapper: DirectoryMapper,
-        auth_user: AuthUser,
+        path: dict,
         body: dict):
     req_data = body['data']
-    project_id = req_data['project_id']
-    directory_id = req_data['directory_id']
-    assert f'P{project_id}' in auth_user.acl, '无创建接口分类权限'
-    assert (directory_db := await directory_mapper.select_by_id(id=directory_id)) and \
-       directory_db.get('project_id', 0) == directory_id, '接口分类ID参数错误'
+    project_id = path['project_id']  # 新增和修改的directory_id有鉴权隐患
     interface_id = make_unique_id()
     await interface_mapper.insert_interface(
         id=interface_id,
-        project_id=req_data['project_id'],
-        directory_id=req_data['directory_id'],
-        name=req_data['name'],
-        method=req_data['method'],
-        path=req_data['path'],
-        write_acl=[f'P{project_id}']
+        project_id=project_id,
+        **req_data,
     )
     return {'id': interface_id}
 
 
 @endpoint({
     'method': 'DELETE',
-    'path': '/app/interface/{id}',
+    'path': '/app/project/{project_id}/interface/{id}',
     'summary': '删除接口',
     'requestParam': {
         'path': {
+            'project_id!': 'integer',
             'id!': 'integer',
         }
     },
@@ -135,11 +131,15 @@ async def delete(interface_mapper: InterfaceMapper, path: dict):
 
 @endpoint({
     'method': 'PUT',
-    'path': '/app/interface',
+    'path': '/app/interface/{id}',
     'summary': '修改接口分类',
+    'requestParam': {
+        'path': {
+            'id!': 'integer',
+        }
+    },
     'requestBody': {
         'schema': {
-            'id!': 'integer',
             'name': 'string',
             'method': 'string',
             'path': 'string',
@@ -156,8 +156,7 @@ async def delete(interface_mapper: InterfaceMapper, path: dict):
         }
     }
 })
-async def update(interface_mapper: InterfaceMapper, body: dict):
+async def update(interface_mapper: InterfaceMapper, path: dict, body: dict):
     req_data = body['data']
-    interface_id = req_data['id']
-    assert await interface_mapper.writable(id=interface_id), '无修改接口分类权限'
-    await interface_mapper.update_by_id(**req_data)
+    interface_id = path['id']
+    await interface_mapper.update_by_id(id=interface_id, **req_data)
