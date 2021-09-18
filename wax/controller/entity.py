@@ -1,17 +1,18 @@
 from wax.wax_dsl import endpoint
-from wax.component.security import AuthUser
 from wax.mapper.entity import EntityMapper
 from wax.utils import make_unique_id
 
 
 @endpoint({
     'method': 'GET',
-    'path': '/app/entity',
+    'path': '/app/project/{project_id}/entity',
     'summary': '查询实体列表',
     'requestParam': {
-        'query': {
+        'path': {
             'project_id!': 'integer',
-            'superset_id': 'integer',
+        },
+        'query': {
+            'superset_iid': 'integer',
         }
     },
     'response': {
@@ -20,7 +21,8 @@ from wax.utils import make_unique_id
                 'list[]': {
                     'id': 'integer',
                     'name': 'string',
-                    'superset_id': 'integer'
+                    'superset_id': 'integer',
+                    'superset_iid': 'integer',
                 }
             }
         }
@@ -58,46 +60,51 @@ async def query_detail(entity_mapper: EntityMapper, path: dict):
 
 @endpoint({
     'method': 'POST',
-    'path': '/app/entity',
+    'path': '/app/project/{project_id}/entity',
     'summary': '创建实体',
+    'requestParam': {
+        'path': {
+            'project_id!': 'integer',
+        }
+    },
     'requestBody': {
         'schema': {
             'name!': 'string',
-            'project_id!': 'integer',
-            'superset_id!': ['integer', '超集实体ID'],
+            'superset_iid!': ['integer', '超集实体IID'],
         }
     },
     'response': {
         '200': {
             'schema': {
-                'id': ['integer', '实体ID']
+                'id': ['integer', '实体ID'],
+                'iid': ['integer', '实体IID'],
             }
         }
     }
 })
-async def insert(entity_mapper: EntityMapper, auth_user: AuthUser, body: dict):
+async def insert(entity_mapper: EntityMapper, path: dict, body: dict):
     req_data = body['data']
-    project_id = req_data['project_id']
-    assert f'P{project_id}' in auth_user.acl, '无创建实体权限'
+    project_id = path['project_id']
     entity_id = make_unique_id()
     await entity_mapper.insert_entity(
         id=entity_id,
-        project_id=req_data['project_id'],
-        superset_id=req_data['superset_id'],
-        name=req_data['name'],
-        content=req_data['content'],
-        write_acl=[f'P{project_id}']
+        project_id=project_id,
+        **req_data
     )
     return {'id': entity_id}
 
 
 @endpoint({
     'method': 'PUT',
-    'path': '/app/entity',
+    'path': '/app/entity/{id}',
     'summary': '修改实体',
+    'requestParam': {
+        'path': {
+            'id!': 'integer',
+        }
+    },
     'requestBody': {
         'schema': {
-            'id!': 'integer',
             'name': 'string',
             'content': 'string',
         }
@@ -110,11 +117,10 @@ async def insert(entity_mapper: EntityMapper, auth_user: AuthUser, body: dict):
         }
     }
 })
-async def update(entity_mapper: EntityMapper, body: dict):
+async def update(entity_mapper: EntityMapper, path: dict, body: dict):
     req_data = body['data']
-    entity_id = req_data['id']
-    assert await entity_mapper.writable(id=entity_id), '无修改实体权限'
-    await entity_mapper.update_by_id(**req_data)
+    entity_id = path['id']
+    await entity_mapper.update_by_id(id=entity_id, **req_data)
     return {'id': entity_id}
 
 
@@ -137,6 +143,5 @@ async def update(entity_mapper: EntityMapper, body: dict):
 })
 async def delete(entity_mapper: EntityMapper, path: dict):
     entity_id = path['id']
-    assert await entity_mapper.writable(id=entity_id), '无删除实体权限'
     await entity_mapper.delete_by_id(id=entity_id)
     return {'id': entity_id}

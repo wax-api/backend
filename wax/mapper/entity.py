@@ -15,12 +15,12 @@ class EntityMapper(Mapper):
 
     @select_all('''select id, name, superset_id from tbl_entity 
     where project_id=:project_id
-    % if superset_id:
-        and superset_id=:superset_id,
+    % if superset_iid:
+        and superset_iid=:superset_iid,
     % endif 
     order by id desc
     ''')
-    async def select_list(self, *, project_id: int, superset_id: int=None):
+    async def select_list(self, *, project_id: int, superset_iid: int=None):
         pass
 
     @update('''update tbl_entity set
@@ -35,10 +35,10 @@ class EntityMapper(Mapper):
     async def update_by_id(self, *, id: int, name: str=None, content: str=None):
         pass
 
-    @insert('''insert tbl_entity(id, project_id, superset_id, name, content, read_acl, write_acl)
-    select :id, :project_id, :superset_id, :name, :content, T.read_acl, :write_acl
-    from (select id, read_acl from tbl_project where id=:project_id) T''')
-    async def insert_entity(self, *, id: int, project_id: int, superset_id: int, name: str, content: str, write_acl: list):
+    @insert('''insert tbl_entity(id, project_id, superset_iid, name, content)
+    values (:id, :project_id, :superset_iid, :name, :content)
+    ''')
+    async def insert_entity(self, *, id: int, project_id: int, superset_iid: int, name: str, content: str):
         pass
 
     @delete('''delete from tbl_entity where id=:id''')
