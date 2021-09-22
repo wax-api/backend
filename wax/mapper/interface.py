@@ -7,20 +7,20 @@ class InterfaceMapper(Mapper):
     async def select_by_iid(self, *, project_id: int, iid: int):
         pass
 
-    @select_one('''select id, name, method, path, directory_id, status, endpoint, 
+    @select_one('''select id, name, method, path, directory_iid, status, endpoint, 
     created_at, updated_at, create_user_id, update_user_id 
     from tbl_interface where id=:id''')
     async def select_by_id(self, *, id: int):
         pass
 
-    @select_all('''select id, name, method, path, directory_id from tbl_interface 
+    @select_all('''select id, name, method, path, directory_iid from tbl_interface 
     where project_id=:project_id
-    % if directory_id:
-        and directory_id=:directory_id,
+    % if directory_iid:
+        and directory_iid=:directory_iid,
     % endif 
     order by id desc
     ''')
-    async def select_list(self, *, project_id: int, directory_id: int=None):
+    async def select_list(self, *, project_id: int, directory_iid: int=None):
         pass
 
     @update('''update tbl_interface set
@@ -33,8 +33,8 @@ class InterfaceMapper(Mapper):
     % if path is not None:
         path=:path,
     % endif
-    % if directory_id is not None:
-        directory_id=:directory_id,
+    % if directory_iid is not None:
+        directory_iid=:directory_iid,
     % endif
     % if status is not None:
         status=:status,
@@ -44,13 +44,13 @@ class InterfaceMapper(Mapper):
     % endif
     updated_at=NOW() where id=:id
     ''')
-    async def update_by_id(self, *, id: int, name: str=None, method: str=None, path: str=None, directory_id: int=None, status: str=None, endpoint: str=None):
+    async def update_by_id(self, *, id: int, name: str=None, method: str=None, path: str=None, directory_iid: int=None, status: str=None, endpoint: str=None):
         pass
 
-    @insert('''insert tbl_interface(id, project_id, directory_id, name, method, path)
-    values (:id, :project_id, :directory_id, :name, :method, :path)
+    @insert('''insert tbl_interface(id, iid, project_id, directory_iid, directory_iid, name, method, path)
+    values (:id, :iid, :project_id, :directory_iid, :name, :method, :path)
     ''')
-    async def insert_interface(self, *, id: int, project_id: int, directory_id: int, name: str, method: str, path: str):
+    async def insert_interface(self, *, id: int, iid: int, project_id: int, directory_iid: int, name: str, method: str, path: str):
         pass
 
     @delete('''delete from tbl_interface where id=:id''')

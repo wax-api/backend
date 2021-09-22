@@ -12,7 +12,7 @@ from wax.utils import make_unique_id
             'project_id!': 'integer',
         },
         'query': {
-            'directory_id': 'integer',
+            'directory_iid': 'integer',
         }
     },
     'response': {
@@ -23,14 +23,14 @@ from wax.utils import make_unique_id
                     'name': 'string',
                     'method': 'string',
                     'path': 'string',
-                    'directory_id': 'integer',
+                    'directory_iid': 'integer',
                 }
             }
         }
     }
 })
 async def query_list(interface_mapper: InterfaceMapper, path: dict, query: dict):
-    interface_list = await interface_mapper.select_list(project_id=path['project_id'], directory_id=query.get('directory_id'))
+    interface_list = await interface_mapper.select_list(project_id=path['project_id'], directory_iid=query.get('directory_iid'))
     return {'list': interface_list}
 
 
@@ -50,7 +50,6 @@ async def query_list(interface_mapper: InterfaceMapper, path: dict, query: dict)
                 'name': 'string',
                 'method': 'string',
                 'path': 'string',
-                'directory_id': 'integer',
                 'status': ['string', {'enum': ['active', 'closed']}],
                 'created_at': 'string',
                 'create_user_id': 'integer',
@@ -76,7 +75,7 @@ async def query_detail(interface_mapper: InterfaceMapper, path: dict):
     },
     'requestBody': {
         'schema': {
-            'directory_id!': 'integer',
+            'directory_iid!': 'integer',
             'name!': 'string',
             'method!': 'string',
             'path!': 'string',
@@ -95,10 +94,11 @@ async def insert(
         path: dict,
         body: dict):
     req_data = body['data']
-    project_id = path['project_id']  # 新增和修改的directory_id有鉴权隐患
+    project_id = path['project_id']
     interface_id = make_unique_id()
     await interface_mapper.insert_interface(
         id=interface_id,
+        iid=interface_id,
         project_id=project_id,
         **req_data,
     )
@@ -143,7 +143,6 @@ async def delete(interface_mapper: InterfaceMapper, path: dict):
             'name': 'string',
             'method': 'string',
             'path': 'string',
-            'directory_id': 'integer',
             'status': ['string', {'enum': ['active', 'closed']}],
             'endpoint': 'string',
         }
@@ -160,3 +159,37 @@ async def update(interface_mapper: InterfaceMapper, path: dict, body: dict):
     req_data = body['data']
     interface_id = path['id']
     await interface_mapper.update_by_id(id=interface_id, **req_data)
+    return {'id': interface_id}
+
+
+@endpoint({
+    'method': 'PUT',
+    'path': '/app/interface/{id}/directory',
+    'summary': '修改接口分类',
+    'requestParam': {
+        'path': {
+            'id!': 'integer',
+        }
+    },
+    'requestBody': {
+        'schema': {
+            'directory_iid!': 'integer',
+        }
+    },
+    'response': {
+        '200': {
+            'schema': {
+                'id': ['integer', '接口ID']
+            }
+        }
+    }
+})
+async def update_directory(
+        interface_mapper: InterfaceMapper,
+        path: dict,
+        body: dict):
+    req_data = body['data']
+    interface_id = path['id']
+    directory_iid = req_data['directory_iid']
+    await interface_mapper.update_by_id(id=interface_id, directory_iid=directory_iid)
+    return {'id': interface_id}

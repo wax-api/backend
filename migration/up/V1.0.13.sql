@@ -1,7 +1,8 @@
 CREATE TABLE tbl_interface (
   id bigint NOT NULL,
+  iid bigint NOT NULL,
   project_id bigint NOT NULL,
-  directory_id bigint NOT NULL,
+  directory_iid bigint NOT NULL,
   name varchar(200) NOT NULL,
   method varchar(10) NOT NULL,
   path varchar(200) NOT NULL,
@@ -11,5 +12,6 @@ CREATE TABLE tbl_interface (
   endpoint text NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  UNIQUE (iid, project_id)
 )

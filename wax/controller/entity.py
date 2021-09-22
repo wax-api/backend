@@ -21,7 +21,6 @@ from wax.utils import make_unique_id
                 'list[]': {
                     'id': 'integer',
                     'name': 'string',
-                    'superset_id': 'integer',
                     'superset_iid': 'integer',
                 }
             }
@@ -48,7 +47,7 @@ async def query_list(entity_mapper: EntityMapper, query: dict):
                 'id': 'integer',
                 'project_id': 'integer',
                 'name': 'string',
-                'superset_id': ['integer', '超集实体ID'],
+                'superset_iid': ['integer', '超集实体IID'],
                 'content': 'string',
             }
         }
@@ -88,6 +87,7 @@ async def insert(entity_mapper: EntityMapper, path: dict, body: dict):
     entity_id = make_unique_id()
     await entity_mapper.insert_entity(
         id=entity_id,
+        iid=entity_id,
         project_id=project_id,
         **req_data
     )

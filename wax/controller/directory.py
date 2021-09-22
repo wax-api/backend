@@ -59,6 +59,7 @@ async def insert(directory_mapper: DirectoryMapper, path: dict, body: dict):
     directory_id = make_unique_id()
     await directory_mapper.insert_directory(
         id=directory_id,
+        iid=directory_id,
         project_id=project_id,
         name=req_data['name'],
         parent=req_data['parent'],

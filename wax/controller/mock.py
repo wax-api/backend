@@ -1,18 +1,18 @@
 from wax.wax_dsl import endpoint
 from wax.mapper.mock import MockMapper
-from wax.mapper.interface import InterfaceMapper
 from wax.utils import make_unique_id
 
 
 @endpoint({
     'method': 'GET',
-    'path': '/app/interface/{interface_id}/mock',
+    'path': '/app/project/{project_id}/mock',
     'summary': '查询mock列表',
     'requestParam': {
         'path': {
-            'interface_id!': 'integer',
+            'project_id': 'integer',
         },
         'query': {
+            'interface_iid!': 'integer',
             'status_code': 'string',
         }
     },
@@ -22,7 +22,7 @@ from wax.utils import make_unique_id
                 'list[]': {
                     'id': 'integer',
                     'name': 'string',
-                    'interface_id!': 'integer',
+                    'interface_iid!': 'integer',
                     'status_code!': 'string',
                     'content_type': 'string',
                     'active': 'integer',
@@ -32,8 +32,8 @@ from wax.utils import make_unique_id
     }
 })
 async def query_list(mock_mapper: MockMapper, path: dict, query: dict):
-    interface_id = path['interface_id']
-    mock_list = await mock_mapper.select_list(interface_id=interface_id, **query)
+    project_id = path['project_id']
+    mock_list = await mock_mapper.select_list(project_id=project_id, **query)
     return {'list': mock_list}
 
 
@@ -52,7 +52,7 @@ async def query_list(mock_mapper: MockMapper, path: dict, query: dict):
             'schema': {
                 'id': 'integer',
                 'name': 'string',
-                'interface_id!': 'integer',
+                'interface_iid!': 'integer',
                 'status_code!': 'string',
                 'content_type': 'string',
                 'mockjs': 'string',
@@ -98,15 +98,14 @@ async def query_detail(mock_mapper: MockMapper, path: dict):
         }
     }
 })
-async def insert(mock_mapper: MockMapper, interface_mapper: InterfaceMapper, path: dict, body: dict):
+async def insert(mock_mapper: MockMapper, path: dict, body: dict):
     req_data = body['data']
     project_id = path['project_id']
-    assert (interface_db := await interface_mapper.select_by_iid(project_id=project_id, iid=req_data['interface_iid'])), "接口IID不存在"
-    interface_id = interface_db['id']
+    interface_iid = req_data['interface_iid']
     mock_id = make_unique_id()
     if req_data['active']:
-        await mock_mapper.unactive_all(interface_id=interface_id)
-    await mock_mapper.insert_mock(id=mock_id, interface_id=interface_id, **req_data)
+        await mock_mapper.unactive_all(project_id=project_id, interface_iid=interface_iid)
+    await mock_mapper.insert_mock(id=mock_id, **req_data)
 
 
 @endpoint({
@@ -190,6 +189,6 @@ async def delete(mock_mapper: MockMapper, path: dict):
 async def active(mock_mapper: MockMapper, path: dict):
     mock_id = path['id']
     assert (mock_db := await mock_mapper.select_by_id(id=mock_id)), "Mock ID不存在"
-    await mock_mapper.unactive_all(interface_id=mock_db['interface_id'])
+    await mock_mapper.unactive_all(project_id=mock_db['project_id'], interface_iid=mock_db['interface_iid'])
     await mock_mapper.update_by_id(id=mock_id, active=1)
     return {'id': mock_id}
