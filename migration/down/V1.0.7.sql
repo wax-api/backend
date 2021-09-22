@@ -1,1 +1,1 @@
-DELETE FROM tbl_team WHERE id=1
+DELETE FROM tbl_api_acl

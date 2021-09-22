@@ -1,4 +1,6 @@
+import asyncio
 from wax.wax_dsl import endpoint
+from wax.component.gateway import Gateway
 from wax.component.security import AuthUser
 from wax.mapper.project import ProjectMapper
 from wax.utils import make_unique_id
@@ -29,6 +31,7 @@ from wax.utils import make_unique_id
     }
 })
 async def create(
+        gateway: Gateway,
         project_mapper: ProjectMapper,
         auth_user: AuthUser,
         body: dict,
@@ -38,6 +41,22 @@ async def create(
     project_id = make_unique_id()
     await project_mapper.insert_project(id=project_id, team_id=team_id, name=req_data['name'], remark=req_data['remark'])
     await project_mapper.add_project_member(id=make_unique_id(), project_id=project_id, user_id=auth_user.user_id)
+    await asyncio.gather(
+        gateway.put_user_acl(user_id=auth_user.user_id, add_acls=[f'P/{project_id}', f'PA/{project_id}']),
+        gateway.put_api_acl(method='PUT', path=f'/app/team/{team_id}/project/{project_id}', add_acls=[f'PA/{project_id}', f'TA/{team_id}']),
+        gateway.put_api_acl(method='DELETE', path=f'/app/team/{team_id}/project/{project_id}', add_acls=[f'PA/{project_id}', f'TA/{team_id}']),
+        gateway.put_api_acl(method='GET', path=f'/app/team/{team_id}/project/{project_id}/member', add_acls=[f'P/{project_id}', f'TA/{team_id}']),
+        gateway.put_api_acl(method='PUT', path=f'/app/team/{team_id}/project/{project_id}/member', add_acls=[f'PA/{project_id}', f'TA/{team_id}']),
+        gateway.put_api_acl(method='DELETE', path=f'/app/team/{team_id}/project/{project_id}/member', add_acls=[f'PA/{project_id}', f'TA/{team_id}']),
+        gateway.put_api_acl(method='GET', path=f'/app/project/{project_id}/directory', add_acls=[f'P/{project_id}', f'TA/{team_id}']),
+        gateway.put_api_acl(method='POST', path=f'/app/project/{project_id}/directory', add_acls=[f'P/{project_id}', f'TA/{team_id}']),
+        gateway.put_api_acl(method='GET', path=f'/app/project/{project_id}/interface', add_acls=[f'P/{project_id}', f'TA/{team_id}']),
+        gateway.put_api_acl(method='POST', path=f'/app/project/{project_id}/interface', add_acls=[f'P/{project_id}', f'TA/{team_id}']),
+        gateway.put_api_acl(method='GET', path=f'/app/project/{project_id}/entity', add_acls=[f'P/{project_id}', f'TA/{team_id}']),
+        gateway.put_api_acl(method='POST', path=f'/app/project/{project_id}/entity', add_acls=[f'P/{project_id}', f'TA/{team_id}']),
+        gateway.put_api_acl(method='GET', path=f'/app/project/{project_id}/mock', add_acls=[f'P/{project_id}', f'TA/{team_id}']),
+        gateway.put_api_acl(method='POST', path=f'/app/project/{project_id}/mock', add_acls=[f'P/{project_id}', f'TA/{team_id}']),
+    )
     return {'id': project_id}
 
 

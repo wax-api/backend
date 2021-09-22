@@ -1,3 +1,5 @@
+import asyncio
+from wax.component.gateway import Gateway
 from wax.wax_dsl import endpoint
 from wax.mapper.mock import MockMapper
 from wax.utils import make_unique_id
@@ -39,11 +41,10 @@ async def query_list(mock_mapper: MockMapper, path: dict, query: dict):
 
 @endpoint({
     'method': 'GET',
-    'path': '/app/project/{project_id}/mock/{id}',
+    'path': '/app/mock/{id}',
     'summary': '查询mock详情',
     'requestParam': {
         'path': {
-            'project_id!': 'integer',
             'id!': 'integer',
         }
     },
@@ -98,7 +99,11 @@ async def query_detail(mock_mapper: MockMapper, path: dict):
         }
     }
 })
-async def insert(mock_mapper: MockMapper, path: dict, body: dict):
+async def insert(
+        gateway: Gateway,
+        mock_mapper: MockMapper,
+        path: dict,
+        body: dict):
     req_data = body['data']
     project_id = path['project_id']
     interface_iid = req_data['interface_iid']
@@ -106,16 +111,22 @@ async def insert(mock_mapper: MockMapper, path: dict, body: dict):
     if req_data['active']:
         await mock_mapper.unactive_all(project_id=project_id, interface_iid=interface_iid)
     await mock_mapper.insert_mock(id=mock_id, **req_data)
+    await asyncio.gather(
+        gateway.put_api_acl(method='GET', path=f'/app/mock/{mock_id}', add_acls=[f'P/{project_id}']),
+        gateway.put_api_acl(method='PUT', path=f'/app/mock/{mock_id}', add_acls=[f'P/{project_id}']),
+        gateway.put_api_acl(method='DELETE', path=f'/app/mock/{mock_id}', add_acls=[f'P/{project_id}']),
+        gateway.put_api_acl(method='PUT', path=f'/app/mock/{mock_id}/active', add_acls=[f'P/{project_id}']),
+    )
+    return {'id': mock_id}
 
 
 @endpoint({
     'method': 'PUT',
-    'path': '/app/project/{project_id}/mock/{id}',
+    'path': '/app/mock/{id}',
     'summary': '修改mock',
     'requestParam': {
         'path': {
             'id!': 'integer',
-            'project_id!': 'integer',
         }
     },
     'requestBody': {
@@ -146,11 +157,10 @@ async def update(mock_mapper: MockMapper, path: dict, body: dict):
 
 @endpoint({
     'method': 'DELETE',
-    'path': '/app/project/{project_id}/mock/{id}',
+    'path': '/app/mock/{id}',
     'summary': '删除mock',
     'requestParam': {
         'path': {
-            'project_id!': 'integer',
             'id!': 'integer',
         }
     },
@@ -170,11 +180,10 @@ async def delete(mock_mapper: MockMapper, path: dict):
 
 @endpoint({
     'method': 'PUT',
-    'path': '/app/project/{project_id}/mock/{id}/active',
+    'path': '/app/mock/{id}/active',
     'summary': '设置生效mock',
     'requestParam': {
         'path': {
-            'project_id!': 'integer',
             'id!': 'integer',
         }
     },

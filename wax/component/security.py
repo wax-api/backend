@@ -1,4 +1,4 @@
-from aiohttp.web import middleware, Request, HTTPForbidden, HTTPBadRequest, HTTPUnauthorized
+from aiohttp.web import middleware, Request, HTTPForbidden, HTTPNotFound, HTTPUnauthorized
 import re
 from wax.component.jwt import JWTUtil
 from wax.utils import left_strip
@@ -39,7 +39,9 @@ async def security_middleware(request: Request, handler):
         auth_user.acl.extend(acl_db['acl'])
     apiaclmapper = get_request_ctx(request, APIACLMapper, 'apiaclmapper')
     apiacl_db = await apiaclmapper.select_unique(method=request.method, path=request.path)
-    if apiacl_db is not None:
+    if not request.path.startswith('/public/'):
+        if not apiacl_db:
+            raise HTTPNotFound()
         for api_acl in apiacl_db['acl']:
             re_pattern = '^' + api_acl.replace('*', '.*') + '$'
             if any(re.match(re_pattern, user_acl) for user_acl in auth_user.acl):

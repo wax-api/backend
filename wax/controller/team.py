@@ -1,3 +1,4 @@
+import asyncio
 from wax.component.security import AuthUser
 from wax.component.gateway import Gateway
 from wax.mapper.team import TeamMapper
@@ -33,6 +34,16 @@ async def insert(
         id=team_id, name=req_data['name'],
     )
     await team_mapper.add_team_member(id=make_unique_id(), team_id=team_id, user_id=auth_user.user_id)
+    await asyncio.gather(
+        gateway.put_user_acl(user_id=auth_user.user_id, add_acls=[f'T/{team_id}', f'TA/{team_id}']),
+        gateway.put_api_acl(method='POST', path=f'/app/team/{team_id}/user', add_acls=[f'TA/{team_id}']),
+        gateway.put_api_acl(method='PUT', path=f'/app/team/{team_id}', add_acls=[f'TA/{team_id}']),
+        gateway.put_api_acl(method='DELETE', path=f'/app/team/{team_id}', add_acls=[f'TA/{team_id}']),
+        gateway.put_api_acl(method='DELETE', path=f'/app/team/{team_id}/member', add_acls=[f'TA/{team_id}']),
+        gateway.put_api_acl(method='GET', path=f'/app/team/{team_id}/member', add_acls=[f'T/{team_id}']),
+        gateway.put_api_acl(method='POST', path=f'/app/team/{team_id}/project', add_acls=[f'T/{team_id}']),
+        gateway.put_api_acl(method='GET', path=f'/app/team/{team_id}/project', add_acls=[f'T/{team_id}']),
+    )
     return {'id': team_id}
 
 

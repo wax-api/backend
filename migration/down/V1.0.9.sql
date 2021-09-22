@@ -1,1 +1,1 @@
-DELETE FROM tbl_team_user WHERE id=1
+SELECT 'pass'

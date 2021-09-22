@@ -1,3 +1,5 @@
+import asyncio
+from wax.component.gateway import Gateway
 from wax.wax_dsl import endpoint
 from wax.mapper.interface import InterfaceMapper
 from wax.utils import make_unique_id
@@ -90,6 +92,7 @@ async def query_detail(interface_mapper: InterfaceMapper, path: dict):
     }
 })
 async def insert(
+        gateway: Gateway,
         interface_mapper: InterfaceMapper,
         path: dict,
         body: dict):
@@ -102,16 +105,21 @@ async def insert(
         project_id=project_id,
         **req_data,
     )
+    await asyncio.gather(
+        gateway.put_api_acl(method='GET', path=f'/app/interface/{interface_id}', add_acls=[f'P/{project_id}']),
+        gateway.put_api_acl(method='DELETE', path=f'/app/interface/{interface_id}', add_acls=[f'P/{project_id}']),
+        gateway.put_api_acl(method='PUT', path=f'/app/interface/{interface_id}', add_acls=[f'P/{project_id}']),
+        gateway.put_api_acl(method='PUT', path=f'/app/interface/{interface_id}/directory', add_acls=[f'P/{project_id}']),
+    )
     return {'id': interface_id}
 
 
 @endpoint({
     'method': 'DELETE',
-    'path': '/app/project/{project_id}/interface/{id}',
+    'path': '/app/interface/{id}',
     'summary': '删除接口',
     'requestParam': {
         'path': {
-            'project_id!': 'integer',
             'id!': 'integer',
         }
     },

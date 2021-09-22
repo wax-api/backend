@@ -1,3 +1,5 @@
+import asyncio
+from wax.component.gateway import Gateway
 from wax.wax_dsl import endpoint
 from wax.mapper.entity import EntityMapper
 from wax.utils import make_unique_id
@@ -81,7 +83,11 @@ async def query_detail(entity_mapper: EntityMapper, path: dict):
         }
     }
 })
-async def insert(entity_mapper: EntityMapper, path: dict, body: dict):
+async def insert(
+        gateway: Gateway,
+        entity_mapper: EntityMapper,
+        path: dict,
+        body: dict):
     req_data = body['data']
     project_id = path['project_id']
     entity_id = make_unique_id()
@@ -90,6 +96,11 @@ async def insert(entity_mapper: EntityMapper, path: dict, body: dict):
         iid=entity_id,
         project_id=project_id,
         **req_data
+    )
+    await asyncio.gather(
+        gateway.put_api_acl(method='GET', path=f'/app/entity/{entity_id}', add_acls=[f'P/{project_id}']),
+        gateway.put_api_acl(method='PUT', path=f'/app/entity/{entity_id}', add_acls=[f'P/{project_id}']),
+        gateway.put_api_acl(method='DELETE', path=f'/app/entity/{entity_id}', add_acls=[f'P/{project_id}']),
     )
     return {'id': entity_id}
 

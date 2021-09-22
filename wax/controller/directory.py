@@ -1,3 +1,5 @@
+import asyncio
+from wax.component.gateway import Gateway
 from wax.wax_dsl import endpoint
 from wax.mapper.directory import DirectoryMapper
 from wax.utils import make_unique_id
@@ -53,7 +55,11 @@ async def query_list(directory_mapper: DirectoryMapper, path: dict):
         }
     }
 })
-async def insert(directory_mapper: DirectoryMapper, path: dict, body: dict):
+async def insert(
+        gateway: Gateway,
+        directory_mapper: DirectoryMapper,
+        path: dict,
+        body: dict):
     req_data = body['data']
     project_id = path['project_id']
     directory_id = make_unique_id()
@@ -64,6 +70,10 @@ async def insert(directory_mapper: DirectoryMapper, path: dict, body: dict):
         name=req_data['name'],
         parent=req_data['parent'],
         position=req_data['position'],
+    )
+    await asyncio.gather(
+        gateway.put_api_acl(method='DELETE', path=f'/app/directory/{directory_id}', add_acls=[f'PA/{project_id}']),
+        gateway.put_api_acl(method='PUT', path=f'/app/directory/{directory_id}', add_acls=[f'PA/{project_id}']),
     )
     return {'id': directory_id}
 
