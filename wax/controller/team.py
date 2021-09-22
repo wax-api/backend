@@ -94,11 +94,13 @@ async def update(team_mapper: TeamMapper, body: dict, path: dict):
     }
 })
 async def delete(
+        gateway: Gateway,
         team_mapper: TeamMapper,
         path: dict):
     team_id = path['id']
     await team_mapper.remove_team_member(team_id=team_id)
     await team_mapper.delete_by_id(id=team_id)
+    await gateway.put_user_acls([f'T/{team_id}'], pop_acls=[f'T/{team_id}', f'TA/{team_id}'])
     return {'id': team_id}
 
 
@@ -123,12 +125,14 @@ async def delete(
     }
 })
 async def remove_member(
+        gateway: Gateway,
         team_mapper: TeamMapper,
         path: dict,
         query: dict):
     team_id = path['id']
     user_id = query['user_id']
     await team_mapper.remove_team_member(team_id=team_id, user_id=user_id)
+    await gateway.put_user_acl(user_id=user_id, pop_acls=[f'T/{team_id}', f'TA/{team_id}'])
     return {'id': user_id}
 
 

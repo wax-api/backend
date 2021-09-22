@@ -111,11 +111,13 @@ async def update(project_mapper: ProjectMapper, body: dict, path: dict):
     }
 })
 async def delete(
+        gateway: Gateway,
         project_mapper: ProjectMapper,
         path: dict):
     project_id = path['id']
     await project_mapper.delete_by_id(id=project_id)
     await project_mapper.remove_project_member(project_id=project_id)
+    await gateway.put_user_acls(any_acls=[f'P/{project_id}'], pop_acls=[f'P/{project_id}', f'PA/{project_id}'])
     return {'id': project_id}
 
 
@@ -218,7 +220,11 @@ async def list_member(
         }
     }
 })
-async def save_member(project_mapper: ProjectMapper, path: dict, body: dict):
+async def save_member(
+        gateway: Gateway,
+        project_mapper: ProjectMapper,
+        path: dict,
+        body: dict):
     req_data = body['body']
     project_id = path['id']
     user_id = req_data['user_id']
@@ -227,6 +233,10 @@ async def save_member(project_mapper: ProjectMapper, path: dict, body: dict):
         await project_mapper.add_project_member(id=make_unique_id(), project_id=project_id, user_id=user_id, role=role)
     except:  # 编辑项目成员
         await project_mapper.update_project_member(project_id=project_id, user_id=user_id, role=role)
+    if role == 'admin':
+        await gateway.put_user_acl(user_id=user_id, add_acls=[f'P/{project_id}', f'PA/{project_id}'])
+    else:
+        await gateway.put_user_acl(user_id=user_id, pop_acls=[f'PA/{project_id}'], add_acls=[f'P/{project_id}'])
     return {'id': project_id}
 
 
@@ -251,8 +261,13 @@ async def save_member(project_mapper: ProjectMapper, path: dict, body: dict):
         }
     }
 })
-async def remove_member(project_mapper: ProjectMapper, path: dict, query: dict):
+async def remove_member(
+        gateway: Gateway,
+        project_mapper: ProjectMapper,
+        path: dict,
+        query: dict):
     project_id = path['id']
     user_id = query['user_id']
     await project_mapper.remove_project_member(project_id=project_id, user_id=user_id)
+    await gateway.put_user_acl(user_id=user_id, pop_acls=[f'P/{project_id}', f'PA/{project_id}'])
     return {'id': project_id}
