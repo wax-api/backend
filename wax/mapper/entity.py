@@ -3,10 +3,6 @@ from wax.sql_util import update, insert, select_one, select_all, delete
 
 
 class EntityMapper(Mapper):
-    @select_one('''select id from tbl_entity where id=:id''')
-    async def writable(self, *, id: int):
-        pass
-
     @select_one('''select id, name, content, 
     created_at, updated_at, create_user_id, update_user_id 
     from tbl_entity where id=:id''')

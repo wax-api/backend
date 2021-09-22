@@ -3,10 +3,6 @@ from wax.sql_util import select_one, select_range, update, insert, delete
 
 
 class ProjectMapper(Mapper):
-    @select_one('select id, team_id, visibility from tbl_project P where P.id=:id limit 1')
-    async def writable(self, *, id: int) -> dict:
-        pass
-
     @select_one('select * from tbl_project P where P.id=:id limit 1')
     async def select_by_id(self, *, id: int) -> dict:
         pass

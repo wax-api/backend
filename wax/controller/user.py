@@ -92,7 +92,6 @@ async def me_info(user_mapper: UserMapper, auth_user: AuthUser):
 async def update(user_mapper: UserMapper, body: dict, path: dict):
     user_id = path['id']
     req_data = body['data']
-    assert await user_mapper.writable(id=user_id), '编辑用户失败'
     await user_mapper.update_by_id(id=user_id, **req_data)
     return {'id': user_id}
 
@@ -122,7 +121,6 @@ async def update(user_mapper: UserMapper, body: dict, path: dict):
 async def update_password(auth_mapper: AuthMapper, body: dict, path: dict):
     req_data = body['data']
     user_id = path['id']
-    assert await auth_mapper.writable(user_id=user_id), '修改密码失败'
     password = bcrypt.hashpw(req_data['password'].encode(), bcrypt.gensalt()).decode()
     await auth_mapper.update_password(user_id=user_id, password=password)
     return {'id': user_id}

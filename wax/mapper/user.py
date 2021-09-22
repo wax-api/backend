@@ -3,11 +3,6 @@ from wax.sql_util import select_one, update, insert
 
 
 class UserMapper(Mapper):
-
-    @select_one('''select id from tbl_user U where U.id=:id limit 1''')
-    async def writable(self, *, id: int) -> dict:
-        pass
-
     @select_one('''select id,avatar,truename,email,team_id,created_at,updated_at 
     from tbl_user U where U.id=:id limit 1
     ''')

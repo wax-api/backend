@@ -3,10 +3,6 @@ from wax.sql_util import update, insert, select_one, select_all, delete
 
 
 class MockMapper(Mapper):
-    @select_one('''select id, interface_id from tbl_mock where id=:id''')
-    async def writable(self, *, id: int):
-        pass
-
     @select_one('''select id, project_id, interface_id, status_code, content_type, 
     mockjs, content, type, headers, active,
     created_at, updated_at, create_user_id, update_user_id 
