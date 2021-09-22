@@ -3,8 +3,8 @@ from wax.sql_util import update, insert, select_one, select_all, delete
 
 
 class InterfaceMapper(Mapper):
-    @select_one('''select id from tbl_interface where id=:id''')
-    async def writable(self, *, id: int):
+    @select_one('''select id from tbl_interface where project_id=:project_id and iid=:iid limit 1''')
+    async def select_by_iid(self, *, project_id: int, iid: int):
         pass
 
     @select_one('''select id, name, method, path, directory_id, status, endpoint, 

@@ -51,14 +51,14 @@ class MockMapper(Mapper):
     async def update_by_id(self, *, id: int, status_code: str=None, content_type: str=None, mockjs: str=None, content: str=None, type: str=None, headers: str=None, active: int=None):
         pass
 
-    @update('''update tbl_mock set active=0 where interface_id=:interface_id and id<>:id''')
-    async def unactive_except(self, *, id: int, interface_id: int):
+    @update('''update tbl_mock set active=0 where interface_id=:interface_id''')
+    async def unactive_all(self, *, interface_id: int):
         pass
 
-    @insert('''insert tbl_mock(id, project_id, interface_id, status_code, content_type, mockjs, content, type, headers, active, read_acl, write_acl)
-    select :id, :project_id, :interface_id, :status_code, :content_type, :mockjs, :content, :type, :headers, :active, T.read_acl, :write_acl
-    from (select read_acl from tbl_project where id=:project_id) T''')
-    async def insert_mock(self, *, id: int, project_id: int, interface_id: int, status_code: str, content_type: str, mockjs: str, content: str, type: str, headers: str, active: int, write_acl: list):
+    @insert('''insert tbl_mock(id, project_id, interface_id, interface_iid, status_code, content_type, mockjs, content, type, headers, active)
+    values (:id, :project_id, :interface_id, :interface_iid, :status_code, :content_type, :mockjs, :content, :type, :headers, :active)
+    ''')
+    async def insert_mock(self, *, id: int, project_id: int, interface_id: int, interface_iid: int, status_code: str, content_type: str, mockjs: str, content: str, type: str, headers: str, active: int):
         pass
 
     @delete('''delete from tbl_mock where id=:id''')

@@ -2,6 +2,7 @@ CREATE TABLE tbl_mock (
   id bigint NOT NULL,
   project_id bigint NOT NULL,
   interface_id bigint NOT NULL,
+  interface_iid bigint NOT NULL,
   status_code varchar(20) NOT NULL,
   content_type varchar(100) NOT NULL,
   mockjs text NOT NULL,

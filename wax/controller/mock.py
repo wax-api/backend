@@ -1,16 +1,18 @@
 from wax.wax_dsl import endpoint
-from wax.component.security import AuthUser
 from wax.mapper.mock import MockMapper
+from wax.mapper.interface import InterfaceMapper
 from wax.utils import make_unique_id
 
 
 @endpoint({
     'method': 'GET',
-    'path': '/app/mock',
+    'path': '/app/interface/{interface_id}/mock',
     'summary': '查询mock列表',
     'requestParam': {
-        'query': {
+        'path': {
             'interface_id!': 'integer',
+        },
+        'query': {
             'status_code': 'string',
         }
     },
@@ -29,17 +31,19 @@ from wax.utils import make_unique_id
         }
     }
 })
-async def query_list(mock_mapper: MockMapper, query: dict):
-    mock_list = await mock_mapper.select_list(**query)
+async def query_list(mock_mapper: MockMapper, path: dict, query: dict):
+    interface_id = path['interface_id']
+    mock_list = await mock_mapper.select_list(interface_id=interface_id, **query)
     return {'list': mock_list}
 
 
 @endpoint({
     'method': 'GET',
-    'path': '/app/mock/{id}',
+    'path': '/app/project/{project_id}/mock/{id}',
     'summary': '查询mock详情',
     'requestParam': {
         'path': {
+            'project_id!': 'integer',
             'id!': 'integer',
         }
     },
@@ -66,13 +70,17 @@ async def query_detail(mock_mapper: MockMapper, path: dict):
 
 @endpoint({
     'method': 'POST',
-    'path': '/app/mock',
+    'path': '/app/project/{project_id}/mock',
     'summary': '创建mock',
+    'requestParam': {
+        'path': {
+            'project_id!': 'integer',
+        }
+    },
     'requestBody': {
         'schema': {
             'name!': 'string',
-            'project_id!': 'integer',
-            'interface_id!': 'integer',
+            'interface_iid!': 'integer',
             'status_code!': 'string',
             'content_type!': 'string',
             'mockjs!': 'string',
@@ -90,23 +98,29 @@ async def query_detail(mock_mapper: MockMapper, path: dict):
         }
     }
 })
-async def insert(mock_mapper: MockMapper,  auth_user: AuthUser, body: dict):
+async def insert(mock_mapper: MockMapper, interface_mapper: InterfaceMapper, path: dict, body: dict):
     req_data = body['data']
-    project_id = req_data['project_id']
-    assert f'P{project_id}' in auth_user.acl, '无创建mock权限'
+    project_id = path['project_id']
+    assert (interface_db := await interface_mapper.select_by_iid(project_id=project_id, iid=req_data['interface_iid'])), "接口IID不存在"
+    interface_id = interface_db['id']
     mock_id = make_unique_id()
     if req_data['active']:
-        await mock_mapper.unactive_except(id=mock_id, interface_id=req_data['interface_id'])
-    await mock_mapper.insert_mock(id=mock_id, write_acl=[f'P{project_id}'], **req_data)
+        await mock_mapper.unactive_all(interface_id=interface_id)
+    await mock_mapper.insert_mock(id=mock_id, interface_id=interface_id, **req_data)
 
 
 @endpoint({
     'method': 'PUT',
-    'path': '/app/mock',
+    'path': '/app/project/{project_id}/mock/{id}',
     'summary': '修改mock',
+    'requestParam': {
+        'path': {
+            'id!': 'integer',
+            'project_id!': 'integer',
+        }
+    },
     'requestBody': {
         'schema': {
-            'id!': 'integer',
             'name': 'string',
             'status_code!': 'string',
             'content_type': 'string',
@@ -124,20 +138,20 @@ async def insert(mock_mapper: MockMapper,  auth_user: AuthUser, body: dict):
         }
     }
 })
-async def update(mock_mapper: MockMapper, body: dict):
+async def update(mock_mapper: MockMapper, path: dict, body: dict):
     req_data = body['data']
-    mock_id = req_data['id']
-    assert await mock_mapper.writable(id=mock_id), '无修改mock权限'
-    await mock_mapper.update_by_id(**req_data)
+    mock_id = path['id']
+    await mock_mapper.update_by_id(id=mock_id, **req_data)
     return {'id': mock_id}
 
 
 @endpoint({
     'method': 'DELETE',
-    'path': '/app/mock/{id}',
+    'path': '/app/project/{project_id}/mock/{id}',
     'summary': '删除mock',
     'requestParam': {
         'path': {
+            'project_id!': 'integer',
             'id!': 'integer',
         }
     },
@@ -151,17 +165,17 @@ async def update(mock_mapper: MockMapper, body: dict):
 })
 async def delete(mock_mapper: MockMapper, path: dict):
     mock_id = path['id']
-    assert await mock_mapper.writable(id=mock_id), '无删除mock权限'
     await mock_mapper.delete_by_id(id=mock_id)
     return {'id': mock_id}
 
 
 @endpoint({
     'method': 'PUT',
-    'path': '/app/mock/{id}/active',
+    'path': '/app/project/{project_id}/mock/{id}/active',
     'summary': '设置生效mock',
     'requestParam': {
         'path': {
+            'project_id!': 'integer',
             'id!': 'integer',
         }
     },
@@ -175,7 +189,7 @@ async def delete(mock_mapper: MockMapper, path: dict):
 })
 async def active(mock_mapper: MockMapper, path: dict):
     mock_id = path['id']
-    assert (mock_db := await mock_mapper.writable(id=mock_id)), '无设置mock权限'
-    await mock_mapper.unactive_except(id=mock_id, interface_id=mock_db['interface_id'])
+    assert (mock_db := await mock_mapper.select_by_id(id=mock_id)), "Mock ID不存在"
+    await mock_mapper.unactive_all(interface_id=mock_db['interface_id'])
     await mock_mapper.update_by_id(id=mock_id, active=1)
     return {'id': mock_id}
