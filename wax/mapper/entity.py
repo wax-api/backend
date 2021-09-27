@@ -13,7 +13,7 @@ class EntityMapper(Mapper):
     async def select_by_id(self, *, id: int):
         pass
 
-    @select_all('''select id, name, superset_iid from tbl_entity 
+    @select_all('''select id, name, superset_iid, content from tbl_entity 
     where project_id=:project_id
     % if superset_iid:
         and superset_iid=:superset_iid,

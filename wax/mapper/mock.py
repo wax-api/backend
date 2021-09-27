@@ -10,6 +10,12 @@ class MockMapper(Mapper):
     async def select_by_id(self, *, id: int):
         pass
 
+    @select_one('''select * from tbl_mock where
+    project_id=:project_id and interface_iid=:interface_iid and active=1
+    ''')
+    async def select_by_active(self, *, project_id: int, interface_iid: int):
+        pass
+
     @select_all('''select id, name, status_code, content_type, active from tbl_mock 
     where project_id=:project_id and interface_iid=:interface_iid
     % if status_code:
